@@ -2,11 +2,8 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import SecondaryNav from './SecondaryNav';
-const Header = () => {
-  
-  
- 
 
+const Header = () => {
   return (
     <>
       {/* Top navigation bar */}
@@ -25,9 +22,9 @@ const Header = () => {
           </div>
           
           <nav className="hidden md:flex space-x-6 text-md font-semibold">
-            <Link href="#" className="text-gray-700 hover:text-navy-700">Login</Link>
-            <Link href="#" className="text-gray-700 hover:text-navy-700">My booking</Link>
-            <Link href="#" className="text-gray-700 hover:text-navy-700">Customer Service</Link>
+            <Link href="/login" className="text-gray-700 hover:text-navy-700">Login</Link>
+            <Link href="/my-booking" className="text-gray-700 hover:text-navy-700">My booking</Link>
+            <Link href="/customer-service" className="text-gray-700 hover:text-navy-700">Customer Service</Link>
             <Link href="#" className="text-gray-700 hover:text-navy-700">CAD</Link>
             <Link href="#" className="text-gray-700 hover:text-navy-700">English</Link>
           </nav>
@@ -43,7 +40,7 @@ const Header = () => {
             <div className="flex items-center justify-center">
               <Image
                 src="/assets/images/call.svg"
-                alt="MRS Logo"
+                alt="Phone"
                 width={32}
                 height={32}
                 className="mr-2"
