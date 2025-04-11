@@ -1,11 +1,11 @@
 import HotelOverview from '../../src/pages/HotelOverview';
-import Header from '../../src/components/Header';
+import PageHeader from '../../src/components/PageHeader';
 
 export default function HotelOverviewPage() {
   return (
-    <main>
-      <Header />
+    <div className="bg-white min-h-screen">
+      <PageHeader />
       <HotelOverview />
-    </main>
+    </div>
   );
 } 

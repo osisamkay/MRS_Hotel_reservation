@@ -1,10 +1,12 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import SecondaryNav from './SecondaryNav';
 
-const Header = () => {
+const PageHeader = () => {
   const pathname = usePathname();
   
   // Only show SecondaryNav on homepage and hotel-overview page
@@ -63,4 +65,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default PageHeader; 

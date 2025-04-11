@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Header from '../../src/components/Header';
+import { useRouter } from 'next/navigation';
+import PageHeader from '../../src/components/PageHeader';
 import { Eye, EyeOff, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 export default function ResetPasswordPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [password, setPassword] = useState('');
@@ -71,13 +73,16 @@ export default function ResetPasswordPage() {
     setFormError('');
     
     // Here you would normally send a request to your backend to reset the password
-    alert('Password reset successful! Redirecting to login page...');
-    // In a real app, you would redirect to login page after a successful reset
+    // Simulate API call
+    setTimeout(() => {
+      // Redirect to success page
+      router.push('/success?type=reset');
+    }, 1000);
   };
   
   return (
     <div className="bg-white min-h-screen">
-      <Header />
+      <PageHeader />
       
       <div className="container mx-auto px-4 py-8 max-w-xl">
         <h1 className="text-4xl font-bold text-center mb-6">Reset Your Password</h1>

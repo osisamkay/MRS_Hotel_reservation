@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Header from '../../src/components/Header';
+import PageHeader from '../../src/components/PageHeader';
 import { AlertTriangle } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
   
   return (
     <div className="bg-white min-h-screen">
-      <Header />
+      <PageHeader />
       
       <div className="container mx-auto px-4 py-12 max-w-md">
         <h1 className="text-2xl font-bold mb-8 font-serif border-b pb-4">Forgot Password</h1>

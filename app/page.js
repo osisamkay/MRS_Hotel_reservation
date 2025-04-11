@@ -1,8 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import Header from '../src/components/Header';
-import {RoomPhotos} from '../src/components/RoomPhotos';
+import PageHeader from '../src/components/PageHeader';
+import { RoomPhotos } from '../src/components/RoomPhotos';
 import AvailabilitySearch from '../src/components/AvailabilitySearch';
 import MapSection from '../src/components/MapSection';
 
@@ -11,21 +11,19 @@ const DARK_BLUE = '#26355D';
 const LIGHT_GRAY_BG = '#D9D9D9';
 
 export default function HomePage() {
- 
-
   return (
     <div className="bg-white font-sans min-h-screen">
       {/* Header Component */}
-      <Header />
+      <PageHeader />
 
       {/* Room Photos */}
-     <RoomPhotos />
+      <RoomPhotos />
       
       {/* Check Availability Section */}
       <AvailabilitySearch />
       
       {/* Map Section */}
-     <MapSection />
+      <MapSection />
 
       {/* Footer */}
       <footer className="mt-10 p-6 text-center text-gray-600 bg-gray-100">

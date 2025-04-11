@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Header from '../../src/components/Header';
+import PageHeader from '../../src/components/PageHeader';
 import { Eye, EyeOff, AlertTriangle } from 'lucide-react';
 
 export default function LoginPage() {
@@ -84,7 +84,7 @@ export default function LoginPage() {
     // For now, let's simulate a login
     if (formData.userId === 'admin' && formData.password === 'password') {
       // Successful login
-      router.push('/');
+      router.push('/success?type=login');
     } else {
       // Failed login
       setErrors(prev => ({ ...prev, form: 'Invalid user ID or password' }));
@@ -93,7 +93,7 @@ export default function LoginPage() {
   
   return (
     <div className="bg-white min-h-screen">
-      <Header />
+      <PageHeader />
       
       <div className="container mx-auto px-4 py-12 max-w-md">
         {errors.form && (
