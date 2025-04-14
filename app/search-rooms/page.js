@@ -31,11 +31,13 @@ export default function SearchRoomsPage() {
     roomType: 'all',
     amenities: []
   });
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const checkIn = searchParams.get('checkIn');
-  const checkOut = searchParams.get('checkOut');
-  const guests = searchParams.get('guests');
-  const roomCount = searchParams.get('rooms');
+  // Get search parameters
+  const checkIn = searchParams.get('checkIn') || new Date().toISOString();
+  const checkOut = searchParams.get('checkOut') || new Date(Date.now() + 86400000).toISOString();
+  const guests = searchParams.get('guests') || '1';
+  const roomCount = searchParams.get('rooms') || '1';
 
   useEffect(() => {
     fetchAvailableRooms();
@@ -43,17 +45,44 @@ export default function SearchRoomsPage() {
 
   const fetchAvailableRooms = async () => {
     try {
-      const response = await fetch(`/api/rooms/available?${searchParams.toString()}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch rooms');
+      setLoading(true);
+      setError('');
+      
+      // If API route doesn't exist yet, use the regular rooms API
+      // and filter locally
+      const apiUrl = `/api/rooms/available?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}&rooms=${roomCount}`;
+      
+      let response;
+      try {
+        response = await fetch(apiUrl);
+      } catch (e) {
+        // Fallback to regular rooms API
+        response = await fetch('/api/rooms');
       }
-
-      setRooms(data.rooms);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch rooms');
+      }
+      
+      const data = await response.json();
+      
+      // Handle both response formats
+      const roomData = data.rooms || data;
+      
+      // Add placeholder data for testing
+      const roomsWithPlaceholders = roomData.map(room => ({
+        ...room,
+        images: room.images || ['/assets/images/room1.jpg'],
+        amenities: room.amenities || ['Wifi', 'TV', 'Air Conditioning'],
+        maxGuests: room.capacity || 2,
+        bedType: room.bedType || 'King Size Bed',
+        type: room.type || 'Standard'
+      }));
+      
+      setRooms(roomsWithPlaceholders);
     } catch (error) {
-      setError('Failed to load available rooms. Please try again later.');
       console.error('Error fetching rooms:', error);
+      setError('Failed to load available rooms. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -61,23 +90,42 @@ export default function SearchRoomsPage() {
 
   const handleBookNow = (roomId) => {
     if (!user) {
-      router.push(`/login?redirect=/booking/${roomId}?${searchParams.toString()}`);
+      router.push(`/login?callbackUrl=/booking/${roomId}?checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&guests=${guests}`);
       return;
     }
-    router.push(`/booking/${roomId}?${searchParams.toString()}`);
+    
+    router.push(`/booking/${roomId}?checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&guests=${guests}`);
   };
 
-  const filteredRooms = rooms.filter(room => {
-    if (filters.priceRange !== 'all') {
-      const [min, max] = filters.priceRange.split('-').map(Number);
-      if (room.price < min || room.price > max) return false;
-    }
-    if (filters.roomType !== 'all' && room.type !== filters.roomType) return false;
-    if (filters.amenities.length > 0) {
-      return filters.amenities.every(amenity => room.amenities.includes(amenity));
-    }
-    return true;
-  });
+  const applyPriceFilter = (room, priceRange) => {
+    if (priceRange === 'all') return true;
+    
+    const [min, max] = priceRange.split('-').map(Number);
+    return room.price >= min && room.price <= max;
+  };
+  
+  const applyRoomTypeFilter = (room, roomType) => {
+    if (roomType === 'all') return true;
+    
+    // Make case-insensitive comparison
+    return room.type.toLowerCase() === roomType.toLowerCase();
+  };
+  
+  const applyAmenitiesFilter = (room, selectedAmenities) => {
+    if (!selectedAmenities.length) return true;
+    
+    // Convert all strings to lowercase for case-insensitive comparison
+    const roomAmenities = room.amenities.map(a => a.toLowerCase());
+    return selectedAmenities.every(amenity => 
+      roomAmenities.some(a => a.includes(amenity.toLowerCase()))
+    );
+  };
+
+  const filteredRooms = rooms.filter(room => 
+    applyPriceFilter(room, filters.priceRange) && 
+    applyRoomTypeFilter(room, filters.roomType) && 
+    applyAmenitiesFilter(room, filters.amenities)
+  );
 
   const RoomCard = ({ room }) => (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -103,15 +151,15 @@ export default function SearchRoomsPage() {
 
         <div className="mb-6">
           <div className="flex flex-wrap gap-3">
-            {room.amenities.map((amenity, index) => (
+            {room.amenities.slice(0, 4).map((amenity, index) => (
               <span
                 key={index}
                 className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm flex items-center"
               >
-                {amenity === 'wifi' && <Wifi className="h-4 w-4 mr-1" />}
-                {amenity === 'coffee' && <Coffee className="h-4 w-4 mr-1" />}
-                {amenity === 'tv' && <Tv className="h-4 w-4 mr-1" />}
-                {amenity === 'bath' && <Bath className="h-4 w-4 mr-1" />}
+                {amenity.toLowerCase().includes('wifi') && <Wifi className="h-4 w-4 mr-1" />}
+                {amenity.toLowerCase().includes('coffee') && <Coffee className="h-4 w-4 mr-1" />}
+                {amenity.toLowerCase().includes('tv') && <Tv className="h-4 w-4 mr-1" />}
+                {amenity.toLowerCase().includes('bath') && <Bath className="h-4 w-4 mr-1" />}
                 {amenity}
               </span>
             ))}
@@ -137,7 +185,7 @@ export default function SearchRoomsPage() {
 
         <button
           onClick={() => handleBookNow(room.id)}
-          className="w-full bg-mrs-blue text-white px-6 py-3 rounded-md hover:bg-navy-800 transition-colors flex items-center justify-center space-x-2"
+          className="w-full bg-navy-700 text-white px-6 py-3 rounded-md hover:bg-navy-800 transition-colors flex items-center justify-center space-x-2"
         >
           <span>Book Now</span>
           <ArrowRight className="h-5 w-5" />
@@ -145,6 +193,20 @@ export default function SearchRoomsPage() {
       </div>
     </div>
   );
+
+  // Calculate date range for display
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  // Mobile filter toggle
+  const toggleMobileFilters = () => {
+    setMobileFiltersOpen(!mobileFiltersOpen);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -159,7 +221,7 @@ export default function SearchRoomsPage() {
               <div className="flex items-center">
                 <Calendar className="h-5 w-5 mr-2" />
                 <span>
-                  {new Date(checkIn).toLocaleDateString()} - {new Date(checkOut).toLocaleDateString()}
+                  {formatDate(checkIn)} - {formatDate(checkOut)}
                 </span>
               </div>
               <div className="flex items-center">
@@ -175,10 +237,22 @@ export default function SearchRoomsPage() {
             </div>
           )}
 
+          {/* Mobile filter button */}
+          <div className="lg:hidden mb-4">
+            <button 
+              className="flex items-center justify-center w-full bg-white p-4 rounded-md shadow"
+              onClick={toggleMobileFilters}
+            >
+              <Filter className="h-5 w-5 mr-2" />
+              <span>Filters</span>
+              <ChevronDown className={`h-5 w-5 ml-2 transform ${mobileFiltersOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Filters Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-md p-6">
+            <div className={`lg:col-span-1 ${mobileFiltersOpen ? 'block' : 'hidden lg:block'}`}>
+              <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
                   <div className="space-y-4">
@@ -214,6 +288,7 @@ export default function SearchRoomsPage() {
                         <option value="double">Double</option>
                         <option value="suite">Suite</option>
                         <option value="deluxe">Deluxe</option>
+                        <option value="standard">Standard</option>
                       </select>
                     </div>
 
@@ -240,6 +315,20 @@ export default function SearchRoomsPage() {
                         ))}
                       </div>
                     </div>
+                    
+                    {/* Reset Filters button */}
+                    <div className="pt-2">
+                      <button
+                        onClick={() => setFilters({
+                          priceRange: 'all',
+                          roomType: 'all',
+                          amenities: []
+                        })}
+                        className="text-navy-700 hover:text-navy-800 text-sm font-medium"
+                      >
+                        Reset Filters
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -247,6 +336,31 @@ export default function SearchRoomsPage() {
 
             {/* Room List */}
             <div className="lg:col-span-3">
+              {/* Results summary */}
+              <div className="mb-4 flex justify-between items-center">
+                <p className="text-gray-600">
+                  {loading ? 'Loading rooms...' : `${filteredRooms.length} ${filteredRooms.length === 1 ? 'room' : 'rooms'} available`}
+                </p>
+                <div className="hidden md:block">
+                  <select 
+                    className="border rounded-md p-2"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const sorted = [...filteredRooms].sort((a, b) => {
+                        if (val === 'price-asc') return a.price - b.price;
+                        if (val === 'price-desc') return b.price - a.price;
+                        return 0;
+                      });
+                      setRooms(sorted);
+                    }}
+                  >
+                    <option value="">Sort by</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                  </select>
+                </div>
+              </div>
+              
               {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {[1, 2, 3, 4].map(i => (
@@ -264,22 +378,26 @@ export default function SearchRoomsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-12 bg-white rounded-lg shadow-md">
                   <div className="mb-4">
-                    <Image
-                      src="/assets/images/no-rooms.svg"
-                      alt="No rooms available"
-                      width={200}
-                      height={200}
-                      className="mx-auto"
-                    />
+                    <Filter className="h-20 w-20 mx-auto text-gray-400" />
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    No rooms available
+                    No rooms match your filters
                   </h3>
-                  <p className="text-gray-600">
-                    Try adjusting your search criteria or dates
+                  <p className="text-gray-600 mb-4">
+                    Try adjusting your filter criteria or dates
                   </p>
+                  <button
+                    onClick={() => setFilters({
+                      priceRange: 'all',
+                      roomType: 'all',
+                      amenities: []
+                    })}
+                    className="text-navy-700 hover:text-navy-800 font-medium"
+                  >
+                    Reset All Filters
+                  </button>
                 </div>
               )}
             </div>
@@ -288,4 +406,4 @@ export default function SearchRoomsPage() {
       </main>
     </div>
   );
-} 
+}

@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import { useLocalization } from '../../../src/contexts/LocalizationContext';
 import Image from 'next/image';
 import BookingForm from '../../../src/components/BookingForm';
-import ErrorHandler from '../../../src/components/ErrorHandler';
 
 export default function RoomDetails() {
     const { id } = useParams();
@@ -32,7 +31,12 @@ export default function RoomDetails() {
     }, [id]);
 
     if (loading) return <div className="text-center py-8">Loading...</div>;
-    if (error) return <ErrorHandler message={error} />;
+    if (error) return (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Error: </strong>
+            <span className="block sm:inline">{error}</span>
+        </div>
+    );
     if (!room) return <div className="text-center py-8">Room not found</div>;
 
     return (
@@ -42,14 +46,14 @@ export default function RoomDetails() {
                 <div className="space-y-4">
                     <div className="relative h-96 w-full">
                         <Image
-                            src={room.images[0]}
+                            src={room.images?.[0] || '/assets/images/room1.jpg'}
                             alt={room.name}
                             fill
                             className="object-cover rounded-lg"
                         />
                     </div>
                     <div className="grid grid-cols-3 gap-4">
-                        {room.images.slice(1).map((image, index) => (
+                        {(room.images?.slice(1) || []).map((image, index) => (
                             <div key={index} className="relative h-32">
                                 <Image
                                     src={image}
@@ -69,25 +73,25 @@ export default function RoomDetails() {
 
                     <div className="space-y-4">
                         <div className="flex items-center space-x-4">
-                            <span className="font-semibold">{translate('price')}:</span>
-                            <span className="text-xl">{formatCurrency(room.price)}</span>
-                            <span className="text-gray-500">/ {translate('night')}</span>
+                            <span className="font-semibold">Price:</span>
+                            <span className="text-xl">${room.price}</span>
+                            <span className="text-gray-500">/ night</span>
                         </div>
 
                         <div className="flex items-center space-x-4">
-                            <span className="font-semibold">{translate('capacity')}:</span>
-                            <span>{room.capacity} {translate('guests')}</span>
+                            <span className="font-semibold">Capacity:</span>
+                            <span>{room.capacity} guests</span>
                         </div>
 
                         <div className="flex items-center space-x-4">
-                            <span className="font-semibold">{translate('size')}:</span>
-                            <span>{room.size} m²</span>
+                            <span className="font-semibold">Bed Type:</span>
+                            <span>{room.bedType}</span>
                         </div>
 
                         <div className="space-y-2">
-                            <h3 className="font-semibold">{translate('amenities')}:</h3>
+                            <h3 className="font-semibold">Amenities:</h3>
                             <div className="grid grid-cols-2 gap-2">
-                                {room.amenities.map((amenity, index) => (
+                                {(room.amenities || []).map((amenity, index) => (
                                     <div key={index} className="flex items-center space-x-2">
                                         <span className="text-green-500">✓</span>
                                         <span>{amenity}</span>
@@ -105,4 +109,4 @@ export default function RoomDetails() {
             </div>
         </div>
     );
-} 
+}
