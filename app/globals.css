@@ -32,16 +32,47 @@ body {
   }
 }
 
+/* Calendar styles */
+.calendar-day {
+  @apply w-8 h-8 flex items-center justify-center rounded-full cursor-pointer;
+}
+
+.calendar-day.selected {
+  @apply bg-navy-700 text-white;
+}
+
+.calendar-day.today {
+  @apply border border-navy-700;
+}
+
+.calendar-day:hover {
+  @apply bg-gray-100;
+}
+
+/* Custom styles for the date range */
+.date-range-display {
+  @apply p-2 bg-gray-100 border-2 border-navy-700 text-center font-medium rounded;
+}
+
+/* Button styles */
+.btn-counter {
+  @apply w-7 h-7 bg-gray-700 text-white rounded-full flex items-center justify-center;
+}
+
+.btn-primary {
+  @apply bg-navy-700 text-white font-bold py-3 px-4 rounded hover:bg-navy-800 transition-colors;
+}
+
 @layer components {
   .btn-primary {
-    @apply bg-mrs-blue text-white font-bold py-2 px-4 rounded hover:opacity-90 transition-opacity;
+    @apply bg-navy-700 text-white font-bold py-2 px-4 rounded hover:opacity-90 transition-opacity;
   }
   
   .form-input {
-    @apply bg-mrs-gray p-3 border border-black rounded shadow-inner cursor-pointer;
+    @apply bg-gray-100 p-3 border border-gray-300 rounded shadow-inner cursor-pointer;
   }
   
   .form-label {
-    @apply block text-lg font-bold mb-1 text-black;
+    @apply block text-base font-medium mb-1 text-gray-700;
   }
-} 
+}

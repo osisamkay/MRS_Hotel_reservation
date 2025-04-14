@@ -1,3 +1,4 @@
+'use client'
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -6,10 +7,10 @@ import SecondaryNav from './SecondaryNav';
 
 const Header = () => {
   const pathname = usePathname();
-  
+
   // Only show SecondaryNav on homepage and hotel-overview page
   const showSecondaryNav = pathname === '/' || pathname === '/hotel-overview';
-  
+
   return (
     <>
       {/* Top navigation bar */}
@@ -26,7 +27,7 @@ const Header = () => {
               />
             </Link>
           </div>
-          
+
           <nav className="hidden md:flex space-x-6 text-md font-semibold">
             <Link href="/login" className="text-gray-700 hover:text-navy-700">Login</Link>
             <Link href="/my-booking" className="text-gray-700 hover:text-navy-700">My booking</Link>
@@ -36,7 +37,7 @@ const Header = () => {
           </nav>
         </div>
       </div>
-      
+
       {/* Hotel name and address bar */}
       <header className="bg-navy-700 text-white py-5">
         <div className="container mx-auto px-4 text-center">
@@ -56,7 +57,7 @@ const Header = () => {
           </div>
         </div>
       </header>
-      
+
       {/* Conditionally render SecondaryNav */}
       {showSecondaryNav && <SecondaryNav />}
     </>

@@ -1,0 +1,70 @@
+{
+    "items": [
+        {
+            "id": "pay789ghi",
+            "userId": "user123",
+            "reservationId": "res123abc",
+            "amount": 200,
+            "currency": "USD",
+            "paymentMethod": "credit_card",
+            "status": "completed",
+            "transactionId": "TXN2024ABCDE",
+            "processedAt": "2024-03-20T00:00:00.000Z",
+            "createdAt": "2024-03-20T00:00:00.000Z",
+            "updatedAt": "2024-03-20T00:00:00.000Z"
+        },
+        {
+            "id": "pay790jkl",
+            "userId": "user124",
+            "reservationId": "res124def",
+            "amount": 450,
+            "currency": "USD",
+            "paymentMethod": "paypal",
+            "status": "pending",
+            "transactionId": "TXN2024FGHIJ",
+            "processedAt": null,
+            "createdAt": "2024-03-21T00:00:00.000Z",
+            "updatedAt": "2024-03-21T00:00:00.000Z"
+        },
+        {
+            "id": "pay791mno",
+            "userId": "user125",
+            "reservationId": "res125ghi",
+            "amount": 1250,
+            "currency": "USD",
+            "paymentMethod": "bank_transfer",
+            "status": "completed",
+            "transactionId": "TXN2024KLMNO",
+            "processedAt": "2024-03-22T00:00:00.000Z",
+            "createdAt": "2024-03-22T00:00:00.000Z",
+            "updatedAt": "2024-03-22T00:00:00.000Z"
+        },
+        {
+            "id": "pay792pqr",
+            "userId": "user123",
+            "reservationId": "res126jkl",
+            "amount": 2000,
+            "currency": "USD",
+            "paymentMethod": "credit_card",
+            "status": "refunded",
+            "transactionId": "TXN2024PQRST",
+            "processedAt": "2024-03-23T00:00:00.000Z",
+            "refundReason": "Cancellation due to emergency",
+            "createdAt": "2024-03-23T00:00:00.000Z",
+            "updatedAt": "2024-03-23T00:00:00.000Z"
+        },
+        {
+            "id": "pay793stu",
+            "userId": "user126",
+            "reservationId": "res127mno",
+            "amount": 200,
+            "currency": "USD",
+            "paymentMethod": "debit_card",
+            "status": "completed",
+            "transactionId": "TXN2024UVWXY",
+            "processedAt": "2024-03-19T00:00:00.000Z",
+            "createdAt": "2024-03-19T00:00:00.000Z",
+            "updatedAt": "2024-03-19T00:00:00.000Z"
+        }
+    ]
+}

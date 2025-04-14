@@ -6,18 +6,31 @@
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "create-super-admin": "node scripts/create-super-admin.js"
     },
     "dependencies": {
+        "@prisma/client": "^5.10.0",
+        "axios": "^1.6.7",
+        "bcryptjs": "^2.4.3",
+        "date-fns": "^3.3.1",
+        "jsonwebtoken": "^9.0.2",
         "lucide-react": "^0.487.0",
         "next": "^14.1.0",
+        "next-auth": "^4.24.5",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-router-dom": "^6.22.3"
     },
     "devDependencies": {
+        "@types/bcryptjs": "^2.4.6",
+        "@types/node": "^20.11.19",
+        "@types/react": "^18.2.57",
+        "@types/react-dom": "^18.2.19",
         "autoprefixer": "^10.4.21",
         "postcss": "^8.5.3",
-        "tailwindcss": "^3.4.17"
+        "prisma": "^5.10.0",
+        "tailwindcss": "^3.4.17",
+        "typescript": "^5.3.3"
     }
 }

@@ -1,0 +1,69 @@
+{
+    "items": [
+        {
+            "id": "res123abc",
+            "userId": "user123",
+            "roomId": "lnfg12k3j4",
+            "checkIn": "2024-04-01T14:00:00.000Z",
+            "checkOut": "2024-04-03T11:00:00.000Z",
+            "guests": 2,
+            "status": "confirmed",
+            "totalPrice": 200,
+            "paymentStatus": "paid",
+            "createdAt": "2024-03-20T00:00:00.000Z",
+            "updatedAt": "2024-03-20T00:00:00.000Z"
+        },
+        {
+            "id": "res124def",
+            "userId": "user124",
+            "roomId": "lnfg12k3j5",
+            "checkIn": "2024-04-05T14:00:00.000Z",
+            "checkOut": "2024-04-08T11:00:00.000Z",
+            "guests": 2,
+            "status": "pending",
+            "totalPrice": 450,
+            "paymentStatus": "pending",
+            "createdAt": "2024-03-21T00:00:00.000Z",
+            "updatedAt": "2024-03-21T00:00:00.000Z"
+        },
+        {
+            "id": "res125ghi",
+            "userId": "user125",
+            "roomId": "lnfg12k3j6",
+            "checkIn": "2024-04-10T14:00:00.000Z",
+            "checkOut": "2024-04-15T11:00:00.000Z",
+            "guests": 4,
+            "status": "confirmed",
+            "totalPrice": 1250,
+            "paymentStatus": "paid",
+            "createdAt": "2024-03-22T00:00:00.000Z",
+            "updatedAt": "2024-03-22T00:00:00.000Z"
+        },
+        {
+            "id": "res126jkl",
+            "userId": "user123",
+            "roomId": "lnfg12k3j7",
+            "checkIn": "2024-05-01T14:00:00.000Z",
+            "checkOut": "2024-05-05T11:00:00.000Z",
+            "guests": 6,
+            "status": "cancelled",
+            "totalPrice": 2000,
+            "paymentStatus": "refunded",
+            "createdAt": "2024-03-23T00:00:00.000Z",
+            "updatedAt": "2024-03-23T00:00:00.000Z"
+        },
+        {
+            "id": "res127mno",
+            "userId": "user126",
+            "roomId": "lnfg12k3j4",
+            "checkIn": "2024-04-05T14:00:00.000Z",
+            "checkOut": "2024-04-07T11:00:00.000Z",
+            "guests": 2,
+            "status": "completed",
+            "totalPrice": 200,
+            "paymentStatus": "paid",
+            "createdAt": "2024-03-19T00:00:00.000Z",
+            "updatedAt": "2024-03-19T00:00:00.000Z"
+        }
+    ]
+}

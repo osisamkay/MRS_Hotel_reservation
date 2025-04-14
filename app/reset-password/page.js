@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import PageHeader from '../../src/components/PageHeader';
 import { Eye, EyeOff, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { passwordService } from '../../src/utils/storageService';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [password, setPassword] = useState('');
@@ -18,6 +20,11 @@ export default function ResetPasswordPage() {
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formError, setFormError] = useState('');
+  const [tokenValid, setTokenValid] = useState(true);
+  const [errors, setErrors] = useState({ form: '' });
+  const [success, setSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({ password: '' });
   
   // Password validation state
   const [validations, setValidations] = useState({
@@ -39,17 +46,59 @@ export default function ResetPasswordPage() {
     });
   }, [password, confirmPassword]);
 
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (!token) {
+      setTokenValid(false);
+      setErrors(prev => ({ ...prev, form: 'Invalid or expired reset link' }));
+      return;
+    }
+
+    const validateToken = async () => {
+      try {
+        await passwordService.validateResetToken(token);
+        setTokenValid(true);
+      } catch (error) {
+        setTokenValid(false);
+        setErrors(prev => ({ ...prev, form: error.message }));
+      }
+    };
+
+    validateToken();
+  }, [searchParams]);
+
   // Mark field as touched when it loses focus
   const handleBlur = (field) => {
     setTouchedFields(prev => ({ ...prev, [field]: true }));
   };
   
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setFormSubmitted(true);
-    setTouchedFields({ password: true, confirmPassword: true });
+    setTouchedFields({
+      password: true,
+      confirmPassword: true
+    });
     
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const token = searchParams.get('token');
+      await passwordService.resetPassword(token, formData.password);
+      setSuccess(true);
+    } catch (error) {
+      setErrors(prev => ({ ...prev, form: error.message }));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const validateForm = () => {
     // Check if form is valid
     const isValid = Object.values(validations).every(Boolean);
     
@@ -66,18 +115,13 @@ export default function ResetPasswordPage() {
       } else if (!validations.passwordsMatch) {
         setFormError('Passwords do not match');
       }
-      return;
+      return false;
     }
     
     // If everything is valid, clear errors and proceed
     setFormError('');
-    
-    // Here you would normally send a request to your backend to reset the password
-    // Simulate API call
-    setTimeout(() => {
-      // Redirect to success page
-      router.push('/success?type=reset');
-    }, 1000);
+    setFormData({ password });
+    return true;
   };
   
   return (

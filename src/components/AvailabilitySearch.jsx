@@ -1,605 +1,434 @@
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+'use client';
 
-const AvailabilitySearch = () => {
-    const [rooms, setRooms] = useState(1);
-    const [adults, setAdults] = useState(2);
-    const [seniors, setSeniors] = useState(0);
-    const [showCalendar, setShowCalendar] = useState(false);
-    const [startDate, setStartDate] = useState(null);
-    const [endDate, setEndDate] = useState(null);
-    const [selectionMode, setSelectionMode] = useState('start'); // 'start' or 'end'
-    const [currentMonthIndex, setCurrentMonthIndex] = useState(0); // Index of first visible month
-    const [currentYear, setCurrentYear] = useState(2025);
-    const [showGuestOptions, setShowGuestOptions] = useState(false);
-    const [checkInInput, setCheckInInput] = useState('');
-    const [checkOutInput, setCheckOutInput] = useState('');
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function AvailabilitySearch() {
+  const router = useRouter();
   
-    // Calendar data - dynamically generate months
-    const getMonthData = (month, year) => {
-      const monthNames = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ];
-      
-      // Calculate first day of month (0 = Sunday, 1 = Monday, etc.)
-      const firstDay = new Date(year, month, 1).getDay();
-      
-      // Calculate number of days in month
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      
-      return {
-        name: `${monthNames[month]} ${year}`,
-        days: daysInMonth,
-        firstDay: firstDay,
-        month,
-        year
-      };
-    };
+  // State for form inputs
+  const [checkInDate, setCheckInDate] = useState('');
+  const [checkOutDate, setCheckOutDate] = useState('');
+  const [guests, setGuests] = useState(2);
+  const [rooms, setRooms] = useState(1);
+  const [adults, setAdults] = useState(2);
+  const [seniors, setSeniors] = useState(0);
+  
+  // Calendar display states
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [nextMonth, setNextMonth] = useState((new Date().getMonth() + 1) % 12);
+  const [nextMonthYear, setNextMonthYear] = useState(
+    new Date().getMonth() === 11 ? new Date().getFullYear() + 1 : new Date().getFullYear()
+  );
+  const [selectedStartDate, setSelectedStartDate] = useState(null);
+  const [selectedEndDate, setSelectedEndDate] = useState(null);
+  
+  // Set default selected dates (current date + 2 days)
+  useEffect(() => {
+    const today = new Date();
     
-    // Generate months for display in calendar (current month and next month)
-    const getMonthsForDisplay = () => {
-      const months = [];
-      // Display 2 months at a time instead of 4
-      for (let i = 0; i < 2; i++) {
-        let monthIndex = (currentMonthIndex + i) % 12;
-        let yearOffset = Math.floor((currentMonthIndex + i) / 12);
-        let year = currentYear + yearOffset;
-        months.push(getMonthData(monthIndex, year));
-      }
-      return months;
-    };
-
-  // Format date for display
-  const formatDate = (day, month, year) => {
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${day} ${monthNames[month]} ${year}`;
-  };
-
-  // Navigate to previous months
-  const goToPreviousMonth = () => {
-    if (currentMonthIndex === 0) {
-      setCurrentMonthIndex(11);
+    // Set April 13, 2025 as the start date
+    const startDate = new Date(2025, 3, 13); // April is month 3 (0-indexed)
+    setSelectedStartDate(startDate);
+    
+    // Set April 15, 2025 as the end date
+    const endDate = new Date(2025, 3, 15);
+    setSelectedEndDate(endDate);
+    
+    // Set current display to April 2025
+    setCurrentMonth(3); // April
+    setCurrentYear(2025);
+    setNextMonth(4); // May
+    setNextMonthYear(2025);
+  }, []);
+  
+  // Adjust next month whenever current month changes
+  useEffect(() => {
+    setNextMonth((currentMonth + 1) % 12);
+    setNextMonthYear(currentMonth === 11 ? currentYear + 1 : currentYear);
+  }, [currentMonth, currentYear]);
+  
+  // Handle prev/next month navigation
+  const goToPrevMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
       setCurrentYear(currentYear - 1);
     } else {
-      setCurrentMonthIndex(currentMonthIndex - 1);
+      setCurrentMonth(currentMonth - 1);
     }
   };
-
-  // Navigate to next months
+  
   const goToNextMonth = () => {
-    if (currentMonthIndex === 11) {
-      setCurrentMonthIndex(0);
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
       setCurrentYear(currentYear + 1);
     } else {
-      setCurrentMonthIndex(currentMonthIndex + 1);
+      setCurrentMonth(currentMonth + 1);
     }
   };
   
-  // Navigate to previous year
-  const goToPreviousYear = () => {
-    setCurrentYear(currentYear - 1);
+  // Generate calendar data for a given month and year
+  const generateCalendarDays = (month, year) => {
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const monthName = new Date(year, month, 1).toLocaleString('default', { month: 'long' });
+    
+    return {
+      name: `${monthName} ${year}`,
+      days: Array.from({ length: daysInMonth }, (_, i) => i + 1),
+      firstDay,
+    };
   };
   
-  // Navigate to next year
-  const goToNextYear = () => {
-    setCurrentYear(currentYear + 1);
-  };
-
-  // Handle date selection
-  const handleDateSelect = (day, month, year) => {
-    if (selectionMode === 'start') {
-      setStartDate({ day, month, year });
-      setSelectionMode('end');
-      setEndDate(null);
-    } else {
-      // If selecting end date before start date, swap them
-      const startTimestamp = new Date(startDate.year, startDate.month, startDate.day).getTime();
-      const clickedTimestamp = new Date(year, month, day).getTime();
-      
-      if (clickedTimestamp < startTimestamp) {
-        setEndDate({ ...startDate });
-        setStartDate({ day, month, year });
-      } else {
-        setEndDate({ day, month, year });
-      }
-      setSelectionMode('start');
-    }
-  };
-
-  // Check if a date is selected (either start or within range)
+  // Check if a date is selected
   const isDateSelected = (day, month, year) => {
-    if (!startDate) return false;
+    if (!selectedStartDate || !selectedEndDate) return false;
     
-    // Convert dates to timestamps for easy comparison
-    const dateTimestamp = new Date(year, month, day).getTime();
-    const startTimestamp = new Date(startDate.year, startDate.month, startDate.day).getTime();
-    
-    // If no end date is selected, only check if it's the start date
-    if (!endDate) return dateTimestamp === startTimestamp;
-    
-    // Check if date is within range
-    const endTimestamp = new Date(endDate.year, endDate.month, endDate.day).getTime();
-    return dateTimestamp >= startTimestamp && dateTimestamp <= endTimestamp;
-  };
-
-  // Check if date is start or end specifically (for styling)
-  const isStartDate = (day, month, year) => {
-    return startDate && 
-      startDate.day === day && 
-      startDate.month === month && 
-      startDate.year === year;
-  };
-  
-  const isEndDate = (day, month, year) => {
-    return endDate && 
-      endDate.day === day && 
-      endDate.month === month && 
-      endDate.year === year;
-  };
-
-  // Check if a date is today
-  const isToday = (day, month, year) => {
-    const today = new Date();
-    return day === today.getDate() && 
-           month === today.getMonth() && 
-           year === today.getFullYear();
-  };
-
-  const renderCalendar = (monthData) => {
-    const daysArray = Array.from({ length: monthData.days }, (_, i) => i + 1);
-    const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-    
-    // Add empty cells for days before the 1st
-    const emptyCells = Array.from({ length: monthData.firstDay }, (_, i) => null);
-    const calendarDays = [...emptyCells, ...daysArray];
-    
+    const date = new Date(year, month, day);
     return (
-      <div className="w-full mb-6">
-        <div className="mb-2 text-center font-medium">{monthData.name}</div>
-        <div className="grid grid-cols-7 gap-1 text-center">
-          {weekdays.map((day, i) => (
-            <div key={`head-${i}`} className="text-xs font-medium py-1">{day}</div>
-          ))}
-          
-          {calendarDays.map((day, i) => {
-            if (day === null) return <div key={`empty-${i}`} className="py-2"></div>;
-            
-            const isSelected = isDateSelected(day, monthData.month, monthData.year);
-            const isStart = isStartDate(day, monthData.month, monthData.year);
-            const isEnd = isEndDate(day, monthData.month, monthData.year);
-            const today = isToday(day, monthData.month, monthData.year);
-            
-            return (
-              <div 
-                key={`day-${i}`} 
-                className={`py-2 text-sm cursor-pointer rounded-full
-                  ${isSelected ? 'bg-navy-700 text-white' : ''} 
-                  ${isStart ? 'bg-navy-900 text-white' : ''}
-                  ${isEnd ? 'bg-navy-900 text-white' : ''}
-                  ${today && !isSelected ? 'border border-navy-700' : ''}
-                  hover:bg-gray-100`}
-                onClick={() => handleDateSelect(day, monthData.month, monthData.year)}
-              >
-                {day}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      date >= selectedStartDate &&
+      date <= selectedEndDate
     );
   };
-
-  // Effect to initialize with default dates
-  useEffect(() => {
-    // Set default dates (today + 2 days)
-    if (!startDate) {
-      const today = new Date();
-      const checkoutDate = new Date();
-      checkoutDate.setDate(today.getDate() + 2);
-      
-      setStartDate({ 
-        day: today.getDate(), 
-        month: today.getMonth(), 
-        year: today.getFullYear() 
+  
+  // Check if a specific date is today
+  const isToday = (day, month, year) => {
+    const today = new Date();
+    return (
+      day === today.getDate() &&
+      month === today.getMonth() &&
+      year === today.getFullYear()
+    );
+  };
+  
+  // Check if a date is the selected start date
+  const isStartDate = (day, month, year) => {
+    if (!selectedStartDate) return false;
+    
+    return (
+      day === selectedStartDate.getDate() &&
+      month === selectedStartDate.getMonth() &&
+      year === selectedStartDate.getFullYear()
+    );
+  };
+  
+  // Check if a date is the selected end date
+  const isEndDate = (day, month, year) => {
+    if (!selectedEndDate) return false;
+    
+    return (
+      day === selectedEndDate.getDate() &&
+      month === selectedEndDate.getMonth() &&
+      year === selectedEndDate.getFullYear()
+    );
+  };
+  
+  // Handle search form submission
+  const handleSearch = (e) => {
+    e.preventDefault();
+    
+    if (selectedStartDate && selectedEndDate) {
+      const searchParams = new URLSearchParams({
+        checkIn: selectedStartDate.toISOString(),
+        checkOut: selectedEndDate.toISOString(),
+        adults,
+        seniors,
+        rooms
       });
       
-      setEndDate({ 
-        day: checkoutDate.getDate(), 
-        month: checkoutDate.getMonth(), 
-        year: checkoutDate.getFullYear() 
+      router.push(`/search-rooms?${searchParams.toString()}`);
+    }
+  };
+  
+  // Format a date for display: Apr 13 to Apr 15
+  const formatDateRange = () => {
+    if (!selectedStartDate || !selectedEndDate) return '';
+    
+    const formatDate = (date) => {
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric'
       });
-      
-      setCurrentMonthIndex(today.getMonth());
-      setCurrentYear(today.getFullYear());
-    }
-  }, []);
-
-  // Format date string from object
-  const formatDateFromObject = (dateObj) => {
-    if (!dateObj) return 'Select date';
-    return formatDate(dateObj.day, dateObj.month, dateObj.year);
-  };
-
-  // Calculate stay duration
-  const calculateStayDuration = () => {
-    if (!startDate || !endDate) return '';
+    };
     
-    const start = new Date(startDate.year, startDate.month, startDate.day);
-    const end = new Date(endDate.year, endDate.month, endDate.day);
-    const days = Math.round((end - start) / (1000 * 60 * 60 * 24));
-    
-    return days === 1 ? '1 night' : `${days} nights`;
+    return `${formatDate(selectedStartDate)} to ${formatDate(selectedEndDate)}`;
   };
-
-  // Update input fields when dates change
-  useEffect(() => {
-    if (startDate) {
-      setCheckInInput(`${startDate.year}-${String(startDate.month + 1).padStart(2, '0')}-${String(startDate.day).padStart(2, '0')}`);
-    }
-    if (endDate) {
-      setCheckOutInput(`${endDate.year}-${String(endDate.month + 1).padStart(2, '0')}-${String(endDate.day).padStart(2, '0')}`);
-    }
-  }, [startDate, endDate]);
-
-  // Handle manual date input changes
-  const handleCheckInInputChange = (e) => {
-    setCheckInInput(e.target.value);
-    try {
-      const [year, month, day] = e.target.value.split('-').map(num => parseInt(num, 10));
-      if (isValidDate(year, month - 1, day)) {
-        setStartDate({ day, month: month - 1, year });
-        // If end date is before new start date, adjust it
-        if (endDate) {
-          const newStartDate = new Date(year, month - 1, day);
-          const currentEndDate = new Date(endDate.year, endDate.month, endDate.day);
-          if (newStartDate > currentEndDate) {
-            // Set end date to start date + 1 day
-            const newEndDate = new Date(newStartDate);
-            newEndDate.setDate(newEndDate.getDate() + 1);
-            setEndDate({
-              day: newEndDate.getDate(),
-              month: newEndDate.getMonth(),
-              year: newEndDate.getFullYear()
-            });
-          }
-        }
-      }
-    } catch (error) {
-      // Invalid date format, do nothing
-    }
-  };
-
-  const handleCheckOutInputChange = (e) => {
-    setCheckOutInput(e.target.value);
-    try {
-      const [year, month, day] = e.target.value.split('-').map(num => parseInt(num, 10));
-      if (isValidDate(year, month - 1, day)) {
-        // Only set if date is after start date
-        if (startDate) {
-          const newEndDate = new Date(year, month - 1, day);
-          const currentStartDate = new Date(startDate.year, startDate.month, startDate.day);
-          if (newEndDate >= currentStartDate) {
-            setEndDate({ day, month: month - 1, year });
-          }
-        } else {
-          setEndDate({ day, month: month - 1, year });
-        }
-      }
-    } catch (error) {
-      // Invalid date format, do nothing
-    }
-  };
-
-  // Check if date is valid
-  const isValidDate = (year, month, day) => {
-    const date = new Date(year, month, day);
-    return date.getFullYear() === year && 
-           date.getMonth() === month && 
-           date.getDate() === day;
-  };
-
+  
   return (
-     <div className="container mx-auto px-4 py-4 mb-8">
-        <h2 className="mt-20 mb-10 text-2xl font-bold mb-6 text-center text-navy-700">Check Availability for MRS Hotel</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-          {/* Check-In Date */}
-          <div>
-            <label className="block text-gray-700 mb-2">Check-In date</label>
-            <div className="relative">
-              <input
-                type="date"
-                className="w-full bg-gray-200 border border-gray-300 rounded p-2 h-12"
-                value={checkInInput}
-                onChange={handleCheckInInputChange}
-              />
-              <div 
-                className="absolute top-0 right-0 bottom-0 flex items-center pr-2 cursor-pointer"
-                onClick={() => {
-                  setShowCalendar(true);
-                  setSelectionMode('start');
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </div>
-          
-          {/* Check-Out Date */}
-          <div>
-            <label className="block text-gray-700 mb-2">Check-Out date</label>
-            <div className="relative">
-              <input
-                type="date"
-                className="w-full bg-gray-200 border border-gray-300 rounded p-2 h-12"
-                value={checkOutInput}
-                onChange={handleCheckOutInputChange}
-              />
-              <div 
-                className="absolute top-0 right-0 bottom-0 flex items-center pr-2 cursor-pointer"
-                onClick={() => {
-                  setShowCalendar(true);
-                  setSelectionMode('end');
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </div>
-          
-          {/* Guests */}
-          <div>
-            <label className="block text-gray-700 mb-2">Guests</label>
-            <div className="relative">
-              <input
-                type="number"
-                className="w-full bg-gray-200 border border-gray-300 rounded p-2 h-12"
-                value={adults + seniors}
-                onChange={(e) => {
-                  const total = Math.max(1, parseInt(e.target.value, 10) || 0);
-                  setAdults(total > seniors ? total - seniors : 1);
-                }}
-                min="1"
-              />
-              <div 
-                className="absolute top-0 right-0 bottom-0 flex items-center pr-2 cursor-pointer"
-                onClick={() => setShowGuestOptions(!showGuestOptions)}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </div>
-          
-          {/* Rooms */}
-          <div>
-            <label className="block text-gray-700 mb-2">Rooms</label>
-            <input
-              type="number"
-              className="w-full bg-gray-200 border border-gray-300 rounded p-2 h-12"
-              value={rooms}
-              onChange={(e) => setRooms(Math.max(1, parseInt(e.target.value, 10) || 1))}
-              min="1"
-            />
-          </div>
+    <div className="container mx-auto px-4 mb-12">
+      <h2 className="text-center text-2xl font-bold my-6">Check Availability for MRS Hotel</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div>
+          <label className="block text-gray-700 mb-2">Check-In date</label>
+          <input 
+            type="text" 
+            className="w-full p-3 border border-gray-300 bg-gray-100 rounded" 
+            readOnly
+            value={selectedStartDate ? selectedStartDate.toLocaleDateString() : ''}
+            onClick={() => setShowCalendar(true)}
+          />
         </div>
-
-        {/* Guest Options Dropdown */}
-        {showGuestOptions && (
-          <div className="mt-2 p-4 bg-white  relative z-10">
-            <div className="flex bg-gray-200 p-4 rounded-lg">
-              <div className="grid grid-cols-2 gap-4 w-full">
-                {/* Adults Controls */}
-                <div className="flex items-center">
-                  <div className="mr-4">Adults</div>
-                  <div className="flex items-center ml-auto">
+        
+        <div>
+          <label className="block text-gray-700 mb-2">Check-Out date</label>
+          <input 
+            type="text" 
+            className="w-full p-3 border border-gray-300 bg-gray-100 rounded" 
+            readOnly
+            value={selectedEndDate ? selectedEndDate.toLocaleDateString() : ''}
+            onClick={() => setShowCalendar(true)}
+          />
+        </div>
+        
+        <div>
+          <label className="block text-gray-700 mb-2">Guests</label>
+          <input 
+            type="number" 
+            className="w-full p-3 border border-gray-300 bg-gray-100 rounded" 
+            value={adults + seniors}
+            onChange={(e) => {
+              const total = parseInt(e.target.value);
+              if (total >= seniors) {
+                setAdults(total - seniors);
+              } else {
+                setAdults(0);
+                setSeniors(total);
+              }
+            }}
+            min="1"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-gray-700 mb-2">Rooms</label>
+          <input 
+            type="number" 
+            className="w-full p-3 border border-gray-300 bg-gray-100 rounded" 
+            value={rooms}
+            onChange={(e) => setRooms(Math.max(1, parseInt(e.target.value) || 1))}
+            min="1"
+          />
+        </div>
+      </div>
+      
+      {showCalendar && (
+        <div className="bg-white p-4 rounded-lg shadow-lg mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <button onClick={goToPrevMonth} className="p-1 hover:bg-gray-100 rounded">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            
+            <div className="text-center">
+              <p className="font-semibold">Select your dates</p>
+              {selectedStartDate && selectedEndDate && (
+                <p className="text-sm text-navy-700">{formatDateRange()}</p>
+              )}
+            </div>
+            
+            <button onClick={goToNextMonth} className="p-1 hover:bg-gray-100 rounded">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Current Month Calendar */}
+            <div>
+              <div className="mb-2 text-center font-medium">
+                {generateCalendarDays(currentMonth, currentYear).name}
+              </div>
+              <div className="grid grid-cols-7 text-center">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                  <div key={i} className="text-gray-500 text-sm p-1">{day}</div>
+                ))}
+                
+                {Array(generateCalendarDays(currentMonth, currentYear).firstDay).fill(null).map((_, i) => (
+                  <div key={`empty-${i}`} className="p-2"></div>
+                ))}
+                
+                {generateCalendarDays(currentMonth, currentYear).days.map((day) => {
+                  const isSelected = isDateSelected(day, currentMonth, currentYear);
+                  const isStart = isStartDate(day, currentMonth, currentYear);
+                  const isEnd = isEndDate(day, currentMonth, currentYear);
+                  const isTodayDate = isToday(day, currentMonth, currentYear);
+                  
+                  return (
+                    <div 
+                      key={`day-${day}`} 
+                      className={`p-2 cursor-pointer text-center ${
+                        isSelected ? 'bg-navy-700 text-white' : ''
+                      } ${isStart || isEnd ? 'bg-navy-800 text-white' : ''} ${
+                        isTodayDate && !isSelected ? 'border border-navy-700' : ''
+                      } hover:bg-gray-100 rounded-full`}
+                      onClick={() => {
+                        const date = new Date(currentYear, currentMonth, day);
+                        if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+                          setSelectedStartDate(date);
+                          setSelectedEndDate(null);
+                        } else {
+                          if (date < selectedStartDate) {
+                            setSelectedEndDate(selectedStartDate);
+                            setSelectedStartDate(date);
+                          } else {
+                            setSelectedEndDate(date);
+                          }
+                        }
+                      }}
+                    >
+                      {day}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            
+            {/* Next Month Calendar */}
+            <div>
+              <div className="mb-2 text-center font-medium">
+                {generateCalendarDays(nextMonth, nextMonthYear).name}
+              </div>
+              <div className="grid grid-cols-7 text-center">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                  <div key={i} className="text-gray-500 text-sm p-1">{day}</div>
+                ))}
+                
+                {Array(generateCalendarDays(nextMonth, nextMonthYear).firstDay).fill(null).map((_, i) => (
+                  <div key={`empty-${i}`} className="p-2"></div>
+                ))}
+                
+                {generateCalendarDays(nextMonth, nextMonthYear).days.map((day) => {
+                  const isSelected = isDateSelected(day, nextMonth, nextMonthYear);
+                  const isStart = isStartDate(day, nextMonth, nextMonthYear);
+                  const isEnd = isEndDate(day, nextMonth, nextMonthYear);
+                  const isTodayDate = isToday(day, nextMonth, nextMonthYear);
+                  
+                  return (
+                    <div 
+                      key={`next-day-${day}`} 
+                      className={`p-2 cursor-pointer text-center ${
+                        isSelected ? 'bg-navy-700 text-white' : ''
+                      } ${isStart || isEnd ? 'bg-navy-800 text-white' : ''} ${
+                        isTodayDate && !isSelected ? 'border border-navy-700' : ''
+                      } hover:bg-gray-100 rounded-full`}
+                      onClick={() => {
+                        const date = new Date(nextMonthYear, nextMonth, day);
+                        if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+                          setSelectedStartDate(date);
+                          setSelectedEndDate(null);
+                        } else {
+                          if (date < selectedStartDate) {
+                            setSelectedEndDate(selectedStartDate);
+                            setSelectedStartDate(date);
+                          } else {
+                            setSelectedEndDate(date);
+                          }
+                        }
+                      }}
+                    >
+                      {day}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-6 flex flex-col md:flex-row justify-between items-center">
+            <div className="bg-gray-100 p-4 rounded-lg mb-4 md:mb-0">
+              <div className="grid grid-cols-1 gap-4">
+                {/* Rooms adjustment */}
+                <div className="flex items-center justify-between">
+                  <div className="font-medium">Rooms</div>
+                  <div className="flex items-center">
                     <button 
-                      className="w-8 h-8 bg-gray-800 text-white rounded-full"
-                      onClick={() => setAdults(Math.max(1, adults - 1))}
-                    >-</button>
-                    <span className="mx-4">{adults}</span>
+                      className="w-7 h-7 bg-gray-700 text-white rounded-full flex items-center justify-center"
+                      onClick={() => setRooms(Math.max(1, rooms - 1))}
+                    >
+                      -
+                    </button>
+                    <span className="mx-3">{rooms}</span>
                     <button 
-                      className="w-8 h-8 bg-gray-800 text-white rounded-full"
-                      onClick={() => setAdults(adults + 1)}
-                    >+</button>
+                      className="w-7 h-7 bg-gray-700 text-white rounded-full flex items-center justify-center"
+                      onClick={() => setRooms(rooms + 1)}
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
                 
-                {/* Seniors Controls */}
-                <div className="flex items-center">
-                  <div className="mr-4">
-                    <div>Seniors</div>
+                {/* Adults adjustment */}
+                <div className="flex items-center justify-between">
+                  <div className="font-medium">Adults</div>
+                  <div className="flex items-center">
+                    <button 
+                      className="w-7 h-7 bg-gray-700 text-white rounded-full flex items-center justify-center"
+                      onClick={() => setAdults(Math.max(1, adults - 1))}
+                    >
+                      -
+                    </button>
+                    <span className="mx-3">{adults}</span>
+                    <button 
+                      className="w-7 h-7 bg-gray-700 text-white rounded-full flex items-center justify-center"
+                      onClick={() => setAdults(adults + 1)}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Seniors adjustment */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">Seniors</div>
                     <div className="text-xs text-gray-500">(60+)</div>
                   </div>
-                  <div className="flex items-center ml-auto">
+                  <div className="flex items-center">
                     <button 
-                      className="w-8 h-8 bg-gray-800 text-white rounded-full"
+                      className="w-7 h-7 bg-gray-700 text-white rounded-full flex items-center justify-center"
                       onClick={() => setSeniors(Math.max(0, seniors - 1))}
-                    >-</button>
-                    <span className="mx-4">{seniors}</span>
+                    >
+                      -
+                    </button>
+                    <span className="mx-3">{seniors}</span>
                     <button 
-                      className="w-8 h-8 bg-gray-800 text-white rounded-full"
+                      className="w-7 h-7 bg-gray-700 text-white rounded-full flex items-center justify-center"
                       onClick={() => setSeniors(seniors + 1)}
-                    >+</button>
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
-              </div>
-            </div>
-            <div className="mt-2 text-right">
-              <button 
-                className="bg-navy-700 text-white px-4 py-2 rounded"
-                onClick={() => setShowGuestOptions(false)}
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        )}
-        
-        {/* Calendar */}
-        {showCalendar && (
-          <div className="mt-6 p-4 ">
-            <div className="flex justify-between items-center mb-4">
-              {/* Calendar Navigation */}
-              <div className="flex space-x-2">
-                {/* <button 
-                  className="p-2 rounded-full hover:bg-gray-100"
-                  onClick={goToPreviousYear}
-                  title="Previous Year"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                    <path fillRule="evenodd" d="M9.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                  </svg>
-                </button> */}
-                <button 
-                  className="p-2 rounded-full hover:bg-gray-100"
-                  onClick={goToPreviousMonth}
-                  title="Previous Month"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="flex flex-col items-center w-full mb-4">
-                <p className="text-sm text-gray-700 mb-2">
-                  {selectionMode === 'start' ? 'Select check-in date' : 'Select check-out date'}
-                </p>
-                {startDate && endDate && (
-                  <div className="text-sm font-medium">
-                    <span>{formatDateFromObject(startDate)} - {formatDateFromObject(endDate)}</span>
-                    <span className="ml-2 text-navy-700">({calculateStayDuration()})</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex space-x-2">
-                <button 
-                  className="p-2 rounded-full hover:bg-gray-100"
-                  onClick={goToNextMonth}
-                  title="Next Month"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
-                </button>
-                {/* <button 
-                  className="p-2 rounded-full hover:bg-gray-100"
-                  onClick={goToNextYear}
-                  title="Next Year"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                    <path fillRule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
-                </button> */}
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
-              {getMonthsForDisplay().map((monthData, index) => renderCalendar(monthData))}
-            </div>
-            
-            <div className="rounded-lg flex sm:flex-row flex-col justify-between items-center w-full max-w-4xl p-4 mt-4 mx-auto">
+            <div className="w-full md:w-auto md:min-w-[200px]">
+              <div className="p-3 bg-gray-100 border-2 border-navy-700 text-center font-medium rounded mb-3">
+                {formatDateRange() || 'Select dates'}
+              </div>
               
-              
-              <div className="flex mb-10 sm:mb-0 bg-gray-200 p-4 rounded-lg">
-                <div className="grid grid-cols-1 gap-4 font-bold ">
-                  {/* Rooms Controls */}
-                  <div className="flex items-center">
-                    <div className="mr-4">Rooms</div>
-                    <div className="flex items-center">
-                      <button 
-                        className="w-8 h-8 bg-gray-800 text-white rounded-full"
-                        onClick={() => setRooms(Math.max(1, rooms - 1))}
-                      >-</button>
-                      <span className="mx-4">{rooms}</span>
-                      <button 
-                        className="w-8 h-8 bg-gray-800 text-white rounded-full"
-                        onClick={() => setRooms(rooms + 1)}
-                      >+</button>
-                    </div>
-                  </div>
-                  
-                  {/* Adults Controls */}
-                  <div className="flex items-center">
-                    <div className="mr-4">Adults</div>
-                    <div className="flex items-center">
-                      <button 
-                        className="w-8 h-8 bg-gray-800 text-white rounded-full"
-                        onClick={() => setAdults(Math.max(1, adults - 1))}
-                      >-</button>
-                      <span className="mx-4">{adults}</span>
-                      <button 
-                        className="w-8 h-8 bg-gray-800 text-white rounded-full"
-                        onClick={() => setAdults(adults + 1)}
-                      >+</button>
-                    </div>
-                  </div>
-                  
-                  {/* Seniors Controls */}
-                  <div className="flex items-center font-bold">
-                    <div className="mr-4">
-                      <div>Seniors</div>
-                      <div className="text-xs">(60+)</div>
-                    </div>
-                    <div className="flex items-center">
-                      <button 
-                        className="w-8 h-8 bg-gray-800 text-white rounded-full"
-                        onClick={() => setSeniors(Math.max(0, seniors - 1))}
-                      >-</button>
-                      <span className="mx-4">{seniors}</span>
-                      <button 
-                        className="w-8 h-8 bg-gray-800 text-white rounded-full"
-                        onClick={() => setSeniors(seniors + 1)}
-                      >+</button>
-                    </div>
-                  </div>
-                </div>
-            </div>
-            <div className="items-center w-full max-w-[300px]  ">
-                <div className="flex flex-col items-center">
-                  {/* <div className="text-sm text-gray-500 mb-2">
-                    {startDate && endDate ? 
-                      `${formatDateFromObject(startDate)} to ${formatDateFromObject(endDate)} · ${calculateStayDuration()}` : 
-                      'Select dates'}
-                  </div> */}
-                  <div className="text-sm  bg-gray-200 px-4 py-1 border-2 border-navy-700    text-center font-bold ">
-                    {startDate && endDate ? 
-                      `${formatDateFromObject(startDate)} to ${formatDateFromObject(endDate)} ` : 
-                      'Select dates'}
-                  </div>
-                  <div className="text-sm w-full max-w-2xl bg-gray-200 px-4 py-1 border-2 border-navy-700   mt-10 text-center font-bold ">
-                    {rooms} room · {adults} {adults === 1 ? 'adult' : 'adults'} · {seniors} {seniors === 1 ? 'senior' : 'seniors'}
-                  </div>
-                </div>
+              <div className="p-3 bg-gray-100 border-2 border-navy-700 text-center font-medium rounded">
+                {rooms} room · {adults} {adults === 1 ? 'adult' : 'adults'} · {seniors} {seniors === 1 ? 'senior' : 'seniors'}
               </div>
             </div>
           </div>
-        )}
-        
-        {/* Check Availability Button */}
-        <div className="mt-6">
-          <button 
-            className="w-full bg-navy-700 text-white font-bold py-3 px-6 rounded"
-            onClick={() => {
-              setShowCalendar(false);
-              setShowGuestOptions(false);
-            }}
-          >
-            Check Availability
-          </button>
         </div>
-      </div>
+      )}
+      
+      <button 
+        onClick={() => {
+          setShowCalendar(false);
+          handleSearch(new Event('click'));
+        }}
+        className="w-full py-3 px-4 bg-navy-700 text-white font-medium rounded hover:bg-navy-800 transition-colors"
+      >
+        Check Availability
+      </button>
+    </div>
   );
-};
-
-export default AvailabilitySearch; 
+}

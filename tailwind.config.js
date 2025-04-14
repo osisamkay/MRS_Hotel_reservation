@@ -13,14 +13,16 @@ module.exports = {
         'mrs-gray': '#D9D9D9',
         'navy': {
           700: '#26355D',
+          800: '#1e2a4a',
         },
         indigo: {
           900: '#2A3158', // Custom color for Moose Rock brand
         },
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        serif: ['var(--font-averia)', 'ui-serif', 'Georgia', 'serif'],
+        sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-averia-serif)', 'ui-serif', 'Georgia', 'serif'],
+        'averia': ['var(--font-averia-serif)', 'serif'],
       },
       boxShadow: {
         'inner-custom': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.1)',

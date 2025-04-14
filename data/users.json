@@ -1,0 +1,41 @@
+[
+  {
+    "id": "user1",
+    "name": "John Doe",
+    "email": "user@example.com",
+    "password": "$2a$10$6Bnv6HbKx.4ZeD1XGf.Yp.z3Q9X8Z9jQ9j5Q9j5Q9j5Q9j5Q9j",
+    "role": "user",
+    "phone": "+1234567890",
+    "createdAt": "2024-03-20T00:00:00.000Z",
+    "updatedAt": "2024-03-20T00:00:00.000Z"
+  },
+  {
+    "id": "admin1",
+    "name": "Admin User",
+    "email": "admin@example.com",
+    "password": "$2a$10$6Bnv6HbKx.4ZeD1XGf.Yp.z3Q9X8Z9jQ9j5Q9j5Q9j5Q9j5Q9j",
+    "role": "admin",
+    "phone": "+1987654321",
+    "createdAt": "2024-03-20T00:00:00.000Z",
+    "updatedAt": "2024-03-20T00:00:00.000Z"
+  },
+  {
+    "id": "user2",
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "password": "$2a$10$6Bnv6HbKx.4ZeD1XGf.Yp.z3Q9X8Z9jQ9j5Q9j5Q9j5Q9j5Q9j",
+    "role": "user",
+    "phone": "+1223334444",
+    "createdAt": "2024-03-25T00:00:00.000Z",
+    "updatedAt": "2024-03-25T00:00:00.000Z"
+  },
+  {
+    "id": "userb2a13a4a-532c-4997-b322-a651aaae5813",
+    "email": "osisami.oj@gmail.com",
+    "password": "$2a$10$amQjteuiMeS/R.TuATayQufl8kMDuXvq30nTpwDM2tFne8zUXT6rC",
+    "name": "Olukayode Osisami",
+    "role": "user",
+    "createdAt": "2025-04-14T04:14:23.739Z",
+    "updatedAt": "2025-04-14T04:14:23.739Z"
+  }
+]

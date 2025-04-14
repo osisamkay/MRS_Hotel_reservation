@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import PageHeader from '../../src/components/PageHeader';
 import { AlertTriangle } from 'lucide-react';
+import { passwordService } from '../../src/utils/storageService';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -13,6 +14,8 @@ export default function ForgotPasswordPage() {
   const [formError, setFormError] = useState('');
   const [touched, setTouched] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
   
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,23 +43,34 @@ export default function ForgotPasswordPage() {
     }
   };
   
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormSubmitted(true);
     setTouched(true);
     
-    if (!validateEmail(email)) {
+    if (!email.trim()) {
+      setFormError('Email is required');
       return;
     }
     
-    // Here you would normally send a request to your backend
-    // For demonstration purposes, we'll show success for certain email formats
-    if (email.endsWith('@example.com')) {
-      // Simulating successful request
-      router.push('/reset-password');
-    } else {
-      // Simulating error for any other email
-      setFormError('Account not found with that email. Please try again.');
+    if (!validateEmail(email)) {
+      setFormError('Please enter a valid email address');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setFormError('');
+    
+    try {
+      const resetToken = await passwordService.requestReset(email);
+      // In a real application, you would send this token via email
+      // For demo purposes, we'll redirect to the reset page with the token
+      setSuccess(true);
+      // Uncomment the following line in production when email sending is implemented
+      // router.push('/reset-password?token=' + resetToken);
+    } catch (err) {
+      setFormError(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
   

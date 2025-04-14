@@ -1,0 +1,64 @@
+{
+    "items": [
+        {
+            "id": "rev456def",
+            "userId": "user123",
+            "roomId": "lnfg12k3j4",
+            "rating": 5,
+            "comment": "Excellent room with great amenities. Very clean and comfortable.",
+            "status": "published",
+            "likes": 2,
+            "reports": 0,
+            "createdAt": "2024-03-20T00:00:00.000Z",
+            "updatedAt": "2024-03-20T00:00:00.000Z"
+        },
+        {
+            "id": "rev457ghi",
+            "userId": "user124",
+            "roomId": "lnfg12k3j5",
+            "rating": 4,
+            "comment": "Very nice deluxe room. The balcony view was amazing. Minor issue with the minibar but staff fixed it quickly.",
+            "status": "published",
+            "likes": 1,
+            "reports": 0,
+            "createdAt": "2024-03-21T00:00:00.000Z",
+            "updatedAt": "2024-03-21T00:00:00.000Z"
+        },
+        {
+            "id": "rev458jkl",
+            "userId": "user125",
+            "roomId": "lnfg12k3j6",
+            "rating": 5,
+            "comment": "The suite was perfect for our family vacation. Spacious, well-equipped kitchen, and the jacuzzi was a hit with the kids!",
+            "status": "published",
+            "likes": 5,
+            "reports": 0,
+            "createdAt": "2024-03-22T00:00:00.000Z",
+            "updatedAt": "2024-03-22T00:00:00.000Z"
+        },
+        {
+            "id": "rev459mno",
+            "userId": "user126",
+            "roomId": "lnfg12k3j4",
+            "rating": 2,
+            "comment": "Room was too small and the AC was noisy.",
+            "status": "flagged",
+            "likes": 0,
+            "reports": 5,
+            "createdAt": "2024-03-23T00:00:00.000Z",
+            "updatedAt": "2024-03-23T00:00:00.000Z"
+        },
+        {
+            "id": "rev460pqr",
+            "userId": "user127",
+            "roomId": "lnfg12k3j7",
+            "rating": 5,
+            "comment": "The penthouse exceeded all expectations! Private pool was amazing, and the views were breathtaking.",
+            "status": "published",
+            "likes": 10,
+            "reports": 0,
+            "createdAt": "2024-03-24T00:00:00.000Z",
+            "updatedAt": "2024-03-24T00:00:00.000Z"
+        }
+    ]
+}

@@ -1,36 +1,25 @@
 'use client';
 
-import Image from 'next/image';
-import PageHeader from '../src/components/PageHeader';
-import { RoomPhotos } from '../src/components/RoomPhotos';
-import AvailabilitySearch from '../src/components/AvailabilitySearch';
-import MapSection from '../src/components/MapSection';
-
-// Constants for styling
-const DARK_BLUE = '#26355D';
-const LIGHT_GRAY_BG = '#D9D9D9';
+import PageHeader from '@/src/components/PageHeader';
+import RoomPhotos from '@/src/components/RoomPhotos';
+import AvailabilitySearch from '@/src/components/AvailabilitySearch';
+import MapSection from '@/src/components/MapSection';
 
 export default function HomePage() {
   return (
-    <div className="bg-white font-sans min-h-screen">
-      {/* Header Component */}
+    <div className="min-h-screen bg-white">
       <PageHeader />
-
-      {/* Room Photos */}
-      <RoomPhotos />
+      <main>
+        <RoomPhotos />
+        <AvailabilitySearch />
+        <MapSection />
+      </main>
       
-      {/* Check Availability Section */}
-      <AvailabilitySearch />
-      
-      {/* Map Section */}
-      <MapSection />
-
-      {/* Footer */}
-      <footer className="mt-10 p-6 text-center text-gray-600 bg-gray-100">
-        <div className="container mx-auto">
-          <p>© 2024 Moose Rock and Suites. All rights reserved.</p>
+      <footer className="bg-navy-700 text-white py-4 text-center">
+        <div className="container mx-auto px-4">
+          <p>© {new Date().getFullYear()} Moose Rock and Suites. All rights reserved.</p>
         </div>
       </footer>
     </div>
   );
-} 
+}
