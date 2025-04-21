@@ -10,7 +10,7 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Initialize user from session on client side
   useEffect(() => {
     async function loadUserSession() {
@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
         const response = await fetch('/api/auth/session');
         if (response.ok) {
           const session = await response.json();
-          
+
           if (session?.user) {
             // Transform NextAuth session user to our app format
             setUser({
@@ -37,49 +37,57 @@ export function AuthProvider({ children }) {
         setIsLoading(false);
       }
     }
-    
+
     loadUserSession();
   }, []);
-  
+
   // Login function
   const login = async (email, password) => {
     try {
-      const result = await signIn('credentials', { 
+      const result = await signIn('credentials', {
         redirect: false,
         email,
         password
       });
-      
+
       if (result?.error) {
         throw new Error(result.error);
       }
-      
+
       // Reload the session to get the updated user data
       const response = await fetch('/api/auth/session');
       if (response.ok) {
         const session = await response.json();
-        
+
         if (session?.user) {
-          setUser({
+          const userData = {
             id: session.user.id,
             email: session.user.email,
             firstName: session.user.name?.split(' ')[0] || '',
             lastName: session.user.name?.split(' ').slice(1).join(' ') || '',
             role: session.user.role || 'user',
-          });
+          };
+          setUser(userData);
+
+          // Redirect based on user role
+          if (userData.role === 'admin') {
+            window.location.href = '/admin';
+          } else {
+            window.location.href = '/';
+          }
         }
       }
-      
+
       return { success: true };
     } catch (error) {
       console.error('Login failed:', error);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: error.message || 'Failed to log in'
       };
     }
   };
-  
+
   // Logout function
   const logout = async () => {
     try {
@@ -92,7 +100,7 @@ export function AuthProvider({ children }) {
       window.location.href = '/api/auth/signout?callbackUrl=/';
     }
   };
-  
+
   return (
     <AuthContext.Provider
       value={{

@@ -6,7 +6,7 @@ import { authOptions } from '@/src/lib/auth';
 export async function PUT(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -57,7 +57,7 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -75,10 +75,32 @@ export async function DELETE(request, { params }) {
     console.error('Error deleting room:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to delete room' },
-      { 
+      {
         status: error.message === 'Room not found' ? 404 :
-                error.message === 'Cannot delete room with active bookings' ? 400 : 500
+          error.message === 'Cannot delete room with active bookings' ? 400 : 500
       }
+    );
+  }
+}
+
+export async function GET(request, { params }) {
+  try {
+    const { roomId } = params;
+    const room = await storageService.getRoom(roomId);
+
+    if (!room) {
+      return NextResponse.json(
+        { error: 'Room not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(room);
+  } catch (error) {
+    console.error('Error fetching room:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch room details' },
+      { status: 500 }
     );
   }
 } 

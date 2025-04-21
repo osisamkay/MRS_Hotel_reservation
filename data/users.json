@@ -37,5 +37,26 @@
     "role": "user",
     "createdAt": "2025-04-14T04:14:23.739Z",
     "updatedAt": "2025-04-14T04:14:23.739Z"
+  },
+  {
+    "id": "user3095026a-d2a1-419b-a40b-c0a91406a1a2",
+    "email": "osisami.oj90@gmail.com",
+    "password": "$2a$10$shKy87cnLRCR2Xqj0xC1xOiHu3F36ZgbIHOfRzHSJOHOZVrfB.WKi",
+    "name": "olukayode Osisami",
+    "role": "user",
+    "createdAt": "2025-04-21T04:27:38.628Z",
+    "updatedAt": "2025-04-21T04:27:38.628Z"
+  },
+  {
+    "id": "p5jrzv9wg",
+    "fullName": "System Administrator",
+    "username": "admin",
+    "email": "admin@mrs.ca",
+    "role": "admin",
+    "accessLevel": "full",
+    "password": "$2a$10$m7xIpm/lYpyIKf3eLB1K0uw2rfyDXXHVBGOv7SqDF98a3UE/WutBK",
+    "mustChangePassword": true,
+    "createdAt": "2025-04-21T05:24:54.734Z",
+    "updatedAt": "2025-04-21T05:24:54.741Z"
   }
 ]

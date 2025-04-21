@@ -1,27 +1,14 @@
-import fs from 'fs';
-import path from 'path';
 import bcrypt from 'bcryptjs';
 
-const DB_PATH = path.join(process.cwd(), 'data');
-const USERS_FILE = path.join(DB_PATH, 'users.json');
-
-// Ensure the data directory exists
-if (!fs.existsSync(DB_PATH)) {
-  fs.mkdirSync(DB_PATH, { recursive: true });
-}
-
-// Ensure the users file exists
-if (!fs.existsSync(USERS_FILE)) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify({ users: [] }, null, 2));
-}
+const STORAGE_KEY = 'users_data';
 
 // Helper function to read users
 const readUsers = () => {
   try {
-    const data = fs.readFileSync(USERS_FILE, 'utf8');
-    return JSON.parse(data);
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : { users: [] };
   } catch (error) {
-    console.error('Error reading users file:', error);
+    console.error('Error reading users:', error);
     return { users: [] };
   }
 };
@@ -29,10 +16,10 @@ const readUsers = () => {
 // Helper function to write users
 const writeUsers = (data) => {
   try {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     return true;
   } catch (error) {
-    console.error('Error writing users file:', error);
+    console.error('Error writing users:', error);
     return false;
   }
 };
@@ -47,50 +34,38 @@ export const storageService = {
   createUser: async (userData) => {
     try {
       const data = readUsers();
-      
-      // Check if user already exists
-      if (data.users.some(user => user.email === userData.email || user.userId === userData.userId)) {
+      const existingUser = data.users.find(user => user.email === userData.email);
+
+      if (existingUser) {
         throw new Error('User already exists');
       }
 
-      // Hash password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(userData.password, salt);
-
-      // Create new user object
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
       const newUser = {
         id: generateId(),
-        email: userData.email,
-        userId: userData.userId,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
+        ...userData,
         password: hashedPassword,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        role: 'user',
-        isActive: true
+        createdAt: new Date().toISOString()
       };
 
-      // Add user to database
       data.users.push(newUser);
-      
-      // Write updated data
-      if (writeUsers(data)) {
-        // Return user data without password
-        const { password, ...userWithoutPassword } = newUser;
-        return userWithoutPassword;
-      } else {
-        throw new Error('Failed to create user');
-      }
+      writeUsers(data);
+      return newUser;
     } catch (error) {
+      console.error('Error creating user:', error);
       throw error;
     }
   },
 
   // Get user by email
   getUserByEmail: async (email) => {
-    const data = readUsers();
-    return data.users.find(user => user.email === email);
+    try {
+      const data = readUsers();
+      return data.users.find(user => user.email === email);
+    } catch (error) {
+      console.error('Error getting user by email:', error);
+      throw error;
+    }
   },
 
   // Get user by ID
@@ -100,30 +75,29 @@ export const storageService = {
   },
 
   // Update user
-  updateUser: async (id, updateData) => {
+  updateUser: async (userId, userData) => {
     try {
       const data = readUsers();
-      const userIndex = data.users.findIndex(user => user.id === id);
-      
+      const userIndex = data.users.findIndex(user => user.id === userId);
+
       if (userIndex === -1) {
         throw new Error('User not found');
       }
 
-      // Update user data
+      if (userData.password) {
+        userData.password = await bcrypt.hash(userData.password, 10);
+      }
+
       data.users[userIndex] = {
         ...data.users[userIndex],
-        ...updateData,
+        ...userData,
         updatedAt: new Date().toISOString()
       };
 
-      // Write updated data
-      if (writeUsers(data)) {
-        const { password, ...userWithoutPassword } = data.users[userIndex];
-        return userWithoutPassword;
-      } else {
-        throw new Error('Failed to update user');
-      }
+      writeUsers(data);
+      return data.users[userIndex];
     } catch (error) {
+      console.error('Error updating user:', error);
       throw error;
     }
   },
@@ -133,14 +107,14 @@ export const storageService = {
     try {
       const data = readUsers();
       const userIndex = data.users.findIndex(user => user.id === id);
-      
+
       if (userIndex === -1) {
         throw new Error('User not found');
       }
 
       // Remove user
       data.users.splice(userIndex, 1);
-      
+
       // Write updated data
       if (writeUsers(data)) {
         return true;
@@ -156,13 +130,13 @@ export const storageService = {
   verifyCredentials: async (email, password) => {
     try {
       const user = await storageService.getUserByEmail(email);
-      
+
       if (!user) {
         return null;
       }
 
       const isValid = await bcrypt.compare(password, user.password);
-      
+
       if (!isValid) {
         return null;
       }
@@ -170,6 +144,58 @@ export const storageService = {
       const { password: _, ...userWithoutPassword } = user;
       return userWithoutPassword;
     } catch (error) {
+      throw error;
+    }
+  }
+};
+
+export const passwordService = {
+  // Generate reset token
+  generateResetToken: () => {
+    return generateId();
+  },
+
+  // Store reset token
+  storeResetToken: async (email, token) => {
+    try {
+      const data = readUsers();
+      const userIndex = data.users.findIndex(user => user.email === email);
+
+      if (userIndex === -1) {
+        throw new Error('User not found');
+      }
+
+      data.users[userIndex].resetToken = token;
+      data.users[userIndex].resetTokenExpiry = new Date(Date.now() + 3600000).toISOString(); // 1 hour expiry
+      writeUsers(data);
+      return true;
+    } catch (error) {
+      console.error('Error storing reset token:', error);
+      throw error;
+    }
+  },
+
+  // Verify reset token
+  verifyResetToken: async (email, token) => {
+    try {
+      const data = readUsers();
+      const user = data.users.find(user => user.email === email);
+
+      if (!user || !user.resetToken || !user.resetTokenExpiry) {
+        return false;
+      }
+
+      if (user.resetToken !== token) {
+        return false;
+      }
+
+      if (new Date(user.resetTokenExpiry) < new Date()) {
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error verifying reset token:', error);
       throw error;
     }
   }
