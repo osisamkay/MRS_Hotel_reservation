@@ -97,3 +97,5 @@ firebase-debug.log
 
 # Misc
 tsconfig.tsbuildinfo
+
+.vercel
