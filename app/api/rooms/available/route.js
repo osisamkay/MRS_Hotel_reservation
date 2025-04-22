@@ -11,7 +11,7 @@ export async function GET(request) {
     const checkOut = searchParams.get('checkOut');
     const guests = parseInt(searchParams.get('guests') || '1', 10);
     const rooms = parseInt(searchParams.get('rooms') || '1', 10);
-    
+
     // Validate parameters
     if (!checkIn || !checkOut) {
       return NextResponse.json(
@@ -19,21 +19,21 @@ export async function GET(request) {
         { status: 400 }
       );
     }
-    
+
     // Format parameters
     const formattedCheckIn = new Date(checkIn).toISOString();
     const formattedCheckOut = new Date(checkOut).toISOString();
-    
+
     // Get available rooms
     const availableRooms = await dataService.getRoomAvailability(
       formattedCheckIn,
       formattedCheckOut
     );
-    
+
     // Filter rooms based on capacity
     const filteredRooms = availableRooms.filter(room => room.capacity >= guests);
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       rooms: filteredRooms,
       searchParams: {
         checkIn: formattedCheckIn,
