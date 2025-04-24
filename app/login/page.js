@@ -7,10 +7,12 @@ import { Eye, EyeOff } from 'lucide-react';
 import PageHeader from '@/src/components/PageHeader';
 import { signIn } from 'next-auth/react';
 import ErrorAlert from '@/src/components/ui/ErrorAlert';
+import { useNotification } from '@/src/contexts/NotificationContext';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { showNotification } = useNotification();
   const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -41,8 +43,9 @@ export default function LoginPage() {
   useEffect(() => {
     if (error === 'CredentialsSignin') {
       setErrors(prev => ({ ...prev, form: 'Invalid email or password' }));
+      showNotification('error', 'Invalid email or password');
     }
-  }, [error]);
+  }, [error, showNotification]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -119,7 +122,11 @@ export default function LoginPage() {
           ...prev,
           form: 'Invalid email or password'
         }));
+        showNotification('error', 'Invalid email or password');
       } else {
+        // Show success notification
+        showNotification('success', 'Login successful');
+        
         // Get user session to check role
         const response = await fetch('/api/auth/session');
         const session = await response.json();
@@ -132,10 +139,12 @@ export default function LoginPage() {
         }
       }
     } catch (error) {
+      const errorMessage = error.message || 'An unexpected error occurred';
       setErrors(prev => ({
         ...prev,
-        form: error.message || 'An unexpected error occurred'
+        form: errorMessage
       }));
+      showNotification('error', errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -230,7 +239,12 @@ export default function LoginPage() {
                 className={`w-full flex justify-center py-3 px-4 text-lg font-averia font-medium text-white bg-navy-700 rounded-md hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy-500 transition-colors ${isSubmitting ? 'opacity-75 cursor-not-allowed' : ''
                   }`}
               >
-                {isSubmitting ? 'Signing in...' : 'Sign in'}
+                {isSubmitting ? (
+                  <span className="flex items-center">
+                    <span className="animate-spin h-5 w-5 mr-2 border-t-2 border-r-2 border-white rounded-full"></span>
+                    Signing in...
+                  </span>
+                ) : 'Sign in'}
               </button>
             </div>
 

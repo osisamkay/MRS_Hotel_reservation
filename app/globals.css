@@ -76,3 +76,56 @@ body {
     @apply block text-base font-medium mb-1 text-gray-700;
   }
 }
+
+/* React DatePicker Custom Styles */
+.react-datepicker {
+  @apply font-sans border-2 border-gray-200 rounded-lg shadow-lg;
+}
+
+.react-datepicker__header {
+  @apply bg-gray-50 border-b border-gray-200 rounded-t-lg;
+}
+
+.react-datepicker__current-month {
+  @apply text-gray-700 font-semibold py-2;
+}
+
+.react-datepicker__day-name {
+  @apply text-gray-600 w-8 h-8 inline-flex items-center justify-center;
+}
+
+.react-datepicker__day {
+  @apply w-8 h-8 inline-flex items-center justify-center text-gray-700 hover:bg-navy-100 rounded-full cursor-pointer;
+}
+
+.react-datepicker__day--selected {
+  @apply bg-navy-700 text-white hover:bg-navy-800;
+}
+
+.react-datepicker__day--keyboard-selected {
+  @apply bg-navy-100 text-navy-700;
+}
+
+.react-datepicker__day--today {
+  @apply font-bold;
+}
+
+.react-datepicker__day--disabled {
+  @apply text-gray-300 cursor-not-allowed hover:bg-transparent;
+}
+
+.react-datepicker__navigation {
+  @apply top-2;
+}
+
+.react-datepicker__navigation--previous {
+  @apply left-2;
+}
+
+.react-datepicker__navigation--next {
+  @apply right-2;
+}
+
+.react-datepicker__input-container input {
+  @apply w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent;
+}

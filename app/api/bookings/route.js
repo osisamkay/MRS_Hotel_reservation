@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
-import { dataService } from '@/src/services/dataService';
+import { db } from '@/src/services/db';
 
 /**
  * Get bookings with optional filtering
@@ -9,13 +9,13 @@ import { dataService } from '@/src/services/dataService';
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
+
+    // if (!session) {
+    //   return NextResponse.json(
+    //     { error: 'Authentication required' },
+    //     { status: 401 }
+    //   );
+    // }
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
@@ -23,7 +23,7 @@ export async function GET(request) {
     const status = searchParams.get('status');
 
     let bookings;
-    
+
     if (userId) {
       // Regular users can only view their own bookings
       if (session.user.id !== userId && !['admin', 'staff', 'super_admin'].includes(session.user.role)) {
@@ -32,8 +32,8 @@ export async function GET(request) {
           { status: 403 }
         );
       }
-      
-      bookings = await dataService.getBookingsByUser(userId);
+
+      bookings = await db.getUserBookings(userId);
     } else {
       // Only staff and admins can view all bookings
       if (!['admin', 'staff', 'super_admin'].includes(session.user.role)) {
@@ -42,15 +42,15 @@ export async function GET(request) {
           { status: 403 }
         );
       }
-      
-      bookings = await dataService.getAllBookings();
-      
+
+      bookings = await db.getAllBookings();
+
       // Apply room filter if provided
       if (roomId) {
         bookings = bookings.filter(booking => booking.roomId === roomId);
       }
     }
-    
+
     // Apply status filter if provided
     if (status) {
       bookings = bookings.filter(booking => booking.status === status);
@@ -72,13 +72,13 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
+
+    // if (!session) {
+    //   return NextResponse.json(
+    //     { error: 'Authentication required' },
+    //     { status: 401 }
+    //   );
+    // }
 
     const bookingData = await request.json();
 
@@ -119,30 +119,70 @@ export async function POST(request) {
       );
     }
 
-    // Check room availability
-    const { available } = await dataService.getRoomAvailability(
-      bookingData.checkIn,
-      bookingData.checkOut,
-      bookingData.roomId
-    );
+    // Check room availability only if this is not a booking confirmation
+    // If skipAvailabilityCheck is true, we bypass the availability check
+    const skipAvailabilityCheck = bookingData.skipAvailabilityCheck;
 
-    if (!available) {
+    if (!skipAvailabilityCheck) {
+      // Get available rooms for the selected dates
+      const availableRooms = await db.getRoomAvailability(
+        bookingData.checkIn,
+        bookingData.checkOut
+      );
+
+      // Check if the requested room is in the list of available rooms
+      const isRoomAvailable = availableRooms.some(room => room.id === bookingData.roomId);
+
+      if (!isRoomAvailable) {
+        return NextResponse.json(
+          { error: 'Room is not available for the selected dates' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Create booking data - remove fields that are not in the schema
+    const {
+      skipAvailabilityCheck: _skip,
+      // specialRequests: _specialRequests,
+      ...bookingDataWithoutExtraFields
+    } = bookingData;
+
+    // Create booking data - only include fields that are in the schema
+    let newBookingData = {
+      ...bookingDataWithoutExtraFields,
+      status: 'pending'
+      // Note: paymentStatus and specialRequests are not in the schema
+    };
+
+    // Add user ID from session if authenticated
+    if (session && session.user) {
+      newBookingData.userId = session.user.id;
+
+      // If authenticated user, use their profile info if guest info not provided
+      if (!bookingData.guestName) {
+        newBookingData.guestName = `${session.user.firstName || ''} ${session.user.lastName || ''}`.trim() || session.user.name || 'Guest';
+      }
+
+      if (!bookingData.guestEmail) {
+        newBookingData.guestEmail = session.user.email;
+      }
+
+      if (!bookingData.guestPhone && session.user.phone) {
+        newBookingData.guestPhone = session.user.phone;
+      }
+    }
+
+    // For all bookings (authenticated or not), ensure we have guest information
+    if (!newBookingData.guestName || !newBookingData.guestEmail || !bookingData.guestPhone) {
       return NextResponse.json(
-        { error: 'Room is not available for the selected dates' },
+        { error: 'Guest information (name, email, and phone) is required for all bookings' },
         { status: 400 }
       );
     }
 
-    // Add user ID from session
-    const newBookingData = {
-      ...bookingData,
-      userId: session.user.id,
-      status: 'pending',
-      paymentStatus: 'pending'
-    };
+    const newBooking = await db.createBooking(newBookingData);
 
-    const newBooking = await dataService.createBooking(newBookingData);
-    
     return NextResponse.json(newBooking);
   } catch (error) {
     console.error('Error creating booking:', error);

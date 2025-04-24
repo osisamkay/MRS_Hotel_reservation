@@ -1,56 +1,77 @@
+// app/api/rooms/route.js
 import { NextResponse } from 'next/server';
+import { prisma } from '@/src/lib/prisma';
 import { getServerSession } from 'next-auth';
-import { authOptions, isUserAdmin } from '@/src/lib/auth';
-import { dataService } from '@/src/services/dataService';
+import { authOptions } from '@/src/lib/auth';
 
-/**
- * Get rooms with optional filtering
- */
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const checkIn = searchParams.get('checkIn');
-    const checkOut = searchParams.get('checkOut');
-    const capacity = searchParams.get('capacity');
     
-    let rooms = await dataService.getAllRooms();
+    // Parse filter query parameters
+    const minPrice = searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')) : undefined;
+    const maxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')) : undefined;
+    const minCapacity = searchParams.get('minCapacity') ? parseInt(searchParams.get('minCapacity')) : undefined;
+    const available = searchParams.get('available') === 'true' ? true : 
+                     searchParams.get('available') === 'false' ? false : undefined;
     
-    // Filter by availability if dates are provided
-    if (checkIn && checkOut) {
-      const availableRooms = await dataService.getRoomAvailability(checkIn, checkOut);
-      if (availableRooms.length > 0) {
-        rooms = availableRooms;
-      }
+    // Build the where clause for filtering
+    const where = {};
+    
+    if (minPrice !== undefined) {
+      where.price = {
+        ...(where.price || {}),
+        gte: minPrice
+      };
     }
     
-    // Filter by capacity if provided
-    if (capacity) {
-      const minCapacity = parseInt(capacity, 10);
-      if (!isNaN(minCapacity)) {
-        rooms = rooms.filter(room => room.capacity >= minCapacity);
-      }
+    if (maxPrice !== undefined) {
+      where.price = {
+        ...(where.price || {}),
+        lte: maxPrice
+      };
     }
     
-    return NextResponse.json({ rooms });
+    if (minCapacity !== undefined) {
+      where.capacity = {
+        gte: minCapacity
+      };
+    }
+    
+    if (available !== undefined) {
+      where.available = available;
+    }
+    
+    console.log('Fetching rooms with filters:', where);
+    
+    // Get rooms from database
+    const rooms = await prisma.room.findMany({
+      where,
+      orderBy: {
+        price: 'asc'
+      }
+    });
+    
+    console.log(`Retrieved ${rooms.length} rooms`);
+    
+    return NextResponse.json(rooms);
   } catch (error) {
     console.error('Error fetching rooms:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch rooms' },
+      { error: error.message || 'Failed to fetch rooms' },
       { status: 500 }
     );
   }
 }
 
-/**
- * Create a new room (admin only)
- */
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || !isUserAdmin(session)) {
+    // Check authentication
+    if (!session || session.user.role !== 'admin') {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Admin privileges required' },
         { status: 403 }
       );
     }
@@ -58,7 +79,7 @@ export async function POST(request) {
     const roomData = await request.json();
     
     // Validate required fields
-    const requiredFields = ['name', 'type', 'price', 'capacity', 'bedType'];
+    const requiredFields = ['name', 'description', 'price', 'capacity', 'amenities', 'images'];
     const missingFields = requiredFields.filter(field => !roomData[field]);
     
     if (missingFields.length > 0) {
@@ -68,13 +89,16 @@ export async function POST(request) {
       );
     }
     
-    const newRoom = await dataService.createRoom(roomData);
+    // Create room in database
+    const newRoom = await prisma.room.create({
+      data: roomData
+    });
     
-    return NextResponse.json(newRoom);
+    return NextResponse.json(newRoom, { status: 201 });
   } catch (error) {
     console.error('Error creating room:', error);
     return NextResponse.json(
-      { error: 'Failed to create room' },
+      { error: error.message || 'Failed to create room' },
       { status: 500 }
     );
   }

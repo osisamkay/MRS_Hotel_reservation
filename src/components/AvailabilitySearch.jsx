@@ -28,20 +28,21 @@ export default function AvailabilitySearch() {
   // Set default selected dates (current date + 2 days)
   useEffect(() => {
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
 
-    // Set April 13, 2025 as the start date
-    const startDate = new Date(2025, 3, 13); // April is month 3 (0-indexed)
-    setSelectedStartDate(startDate);
+    // Set today as the start date
+    setSelectedStartDate(today);
 
-    // Set April 15, 2025 as the end date
-    const endDate = new Date(2025, 3, 15);
-    setSelectedEndDate(endDate);
+    // Set tomorrow as the end date (today + 1 day)
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    setSelectedEndDate(tomorrow);
 
-    // Set current display to April 2025
-    setCurrentMonth(3); // April
-    setCurrentYear(2025);
-    setNextMonth(4); // May
-    setNextMonthYear(2025);
+    // Set current display to current month and year
+    setCurrentMonth(today.getMonth());
+    setCurrentYear(today.getFullYear());
+    setNextMonth((today.getMonth() + 1) % 12);
+    setNextMonthYear(today.getMonth() === 11 ? today.getFullYear() + 1 : today.getFullYear());
   }, []);
 
   // Adjust next month whenever current month changes
@@ -87,42 +88,67 @@ export default function AvailabilitySearch() {
     if (!selectedStartDate || !selectedEndDate) return false;
 
     const date = new Date(year, month, day);
-    return (
-      date >= selectedStartDate &&
-      date <= selectedEndDate
-    );
+    date.setHours(0, 0, 0, 0);
+    const start = new Date(selectedStartDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(selectedEndDate);
+    end.setHours(0, 0, 0, 0);
+
+    return date >= start && date <= end;
   };
 
   // Check if a specific date is today
   const isToday = (day, month, year) => {
     const today = new Date();
-    return (
-      day === today.getDate() &&
-      month === today.getMonth() &&
-      year === today.getFullYear()
-    );
+    today.setHours(0, 0, 0, 0);
+    const date = new Date(year, month, day);
+    date.setHours(0, 0, 0, 0);
+    return date.getTime() === today.getTime();
   };
 
   // Check if a date is the selected start date
   const isStartDate = (day, month, year) => {
     if (!selectedStartDate) return false;
 
-    return (
-      day === selectedStartDate.getDate() &&
-      month === selectedStartDate.getMonth() &&
-      year === selectedStartDate.getFullYear()
-    );
+    const date = new Date(year, month, day);
+    date.setHours(0, 0, 0, 0);
+    const start = new Date(selectedStartDate);
+    start.setHours(0, 0, 0, 0);
+    return date.getTime() === start.getTime();
   };
 
   // Check if a date is the selected end date
   const isEndDate = (day, month, year) => {
     if (!selectedEndDate) return false;
 
-    return (
-      day === selectedEndDate.getDate() &&
-      month === selectedEndDate.getMonth() &&
-      year === selectedEndDate.getFullYear()
-    );
+    const date = new Date(year, month, day);
+    date.setHours(0, 0, 0, 0);
+    const end = new Date(selectedEndDate);
+    end.setHours(0, 0, 0, 0);
+    return date.getTime() === end.getTime();
+  };
+
+  // Check if a date is in the past
+  const isDateInPast = (day, month, year) => {
+    const date = new Date(year, month, day);
+    date.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
+  };
+
+  // Check if a date is in range (between start and end dates)
+  const isInRange = (day, month, year) => {
+    if (!selectedStartDate || !selectedEndDate) return false;
+
+    const date = new Date(year, month, day);
+    date.setHours(0, 0, 0, 0);
+    const start = new Date(selectedStartDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(selectedEndDate);
+    end.setHours(0, 0, 0, 0);
+
+    return date > start && date < end;
   };
 
   // Handle search form submission
@@ -154,6 +180,65 @@ export default function AvailabilitySearch() {
     };
 
     return `${formatDate(selectedStartDate)} to ${formatDate(selectedEndDate)}`;
+  };
+
+  // Handle calendar day click
+  const handleDateClick = (day, month, year) => {
+    const clickedDate = new Date(year, month, day);
+    clickedDate.setHours(0, 0, 0, 0);
+
+    // Prevent selecting dates in the past
+    if (isDateInPast(day, month, year)) {
+      return;
+    }
+
+    if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+      // Start new selection
+      setSelectedStartDate(clickedDate);
+      setSelectedEndDate(null);
+    } else {
+      // Complete the selection
+      const start = new Date(selectedStartDate);
+      start.setHours(0, 0, 0, 0);
+
+      if (clickedDate.getTime() === start.getTime()) {
+        // If clicking the same date, set it as both start and end
+        setSelectedEndDate(clickedDate);
+      } else if (clickedDate < start) {
+        setSelectedStartDate(clickedDate);
+        setSelectedEndDate(start);
+      } else {
+        setSelectedEndDate(clickedDate);
+      }
+    }
+  };
+
+  // Update the next month calendar to use the same date handling logic
+  const handleNextMonthDateClick = (day, month, year) => {
+    const clickedDate = new Date(year, month, day);
+    clickedDate.setHours(0, 0, 0, 0);
+
+    // Prevent selecting dates in the past
+    if (isDateInPast(day, month, year)) {
+      return;
+    }
+
+    if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+      setSelectedStartDate(clickedDate);
+      setSelectedEndDate(null);
+    } else {
+      const start = new Date(selectedStartDate);
+      start.setHours(0, 0, 0, 0);
+
+      if (clickedDate.getTime() === start.getTime()) {
+        setSelectedEndDate(clickedDate);
+      } else if (clickedDate < start) {
+        setSelectedStartDate(clickedDate);
+        setSelectedEndDate(start);
+      } else {
+        setSelectedEndDate(clickedDate);
+      }
+    }
   };
 
   return (
@@ -252,34 +337,31 @@ export default function AvailabilitySearch() {
                   <div key={`empty-${i}`} className="p-2"></div>
                 ))}
 
-                {generateCalendarDays(currentMonth, currentYear).days.map((day) => {
-                  const isSelected = isDateSelected(day, currentMonth, currentYear);
+                {generateCalendarDays(currentMonth, currentYear).days.map((day, i) => {
                   const isStart = isStartDate(day, currentMonth, currentYear);
                   const isEnd = isEndDate(day, currentMonth, currentYear);
-                  const isTodayDate = isToday(day, currentMonth, currentYear);
+                  const isRange = isInRange(day, currentMonth, currentYear);
+                  const isPast = isDateInPast(day, currentMonth, currentYear);
 
                   return (
                     <div
-                      key={`day-${day}`}
-                      className={`p-2 cursor-pointer text-center ${isSelected ? 'bg-navy-700 text-white' : ''
-                        } ${isStart || isEnd ? 'bg-navy-800 text-white' : ''} ${isTodayDate && !isSelected ? 'border border-navy-700' : ''
-                        } hover:bg-gray-100 rounded-full`}
-                      onClick={() => {
-                        const date = new Date(currentYear, currentMonth, day);
-                        if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
-                          setSelectedStartDate(date);
-                          setSelectedEndDate(null);
-                        } else {
-                          if (date < selectedStartDate) {
-                            setSelectedEndDate(selectedStartDate);
-                            setSelectedStartDate(date);
-                          } else {
-                            setSelectedEndDate(date);
-                          }
-                        }
-                      }}
+                      key={`current-${i}`}
+                      className={`
+                        relative p-2 cursor-pointer select-none
+                        ${isPast ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100'}
+                        ${isStart ? 'bg-navy-700 text-white rounded-l' : ''}
+                        ${isEnd ? 'bg-navy-700 text-white rounded-r' : ''}
+                        ${isRange ? 'bg-gray-400' : ''}
+                        ${(isStart || isEnd) ? 'z-10' : ''}
+                      `}
+                      onClick={() => handleDateClick(day, currentMonth, currentYear)}
                     >
-                      {day}
+                      <span className={`relative z-10 ${isRange ? 'text-navy-800' : ''}`}>
+                        {day}
+                      </span>
+                      {isRange && !isStart && !isEnd && (
+                        <div className="absolute inset-0 bg-navy-100"></div>
+                      )}
                     </div>
                   );
                 })}
@@ -300,34 +382,31 @@ export default function AvailabilitySearch() {
                   <div key={`empty-${i}`} className="p-2"></div>
                 ))}
 
-                {generateCalendarDays(nextMonth, nextMonthYear).days.map((day) => {
-                  const isSelected = isDateSelected(day, nextMonth, nextMonthYear);
+                {generateCalendarDays(nextMonth, nextMonthYear).days.map((day, i) => {
                   const isStart = isStartDate(day, nextMonth, nextMonthYear);
                   const isEnd = isEndDate(day, nextMonth, nextMonthYear);
-                  const isTodayDate = isToday(day, nextMonth, nextMonthYear);
+                  const isRange = isInRange(day, nextMonth, nextMonthYear);
+                  const isPast = isDateInPast(day, nextMonth, nextMonthYear);
 
                   return (
                     <div
-                      key={`next-day-${day}`}
-                      className={`p-2 cursor-pointer text-center ${isSelected ? 'bg-navy-700 text-white' : ''
-                        } ${isStart || isEnd ? 'bg-navy-800 text-white' : ''} ${isTodayDate && !isSelected ? 'border border-navy-700' : ''
-                        } hover:bg-gray-100 rounded-full`}
-                      onClick={() => {
-                        const date = new Date(nextMonthYear, nextMonth, day);
-                        if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
-                          setSelectedStartDate(date);
-                          setSelectedEndDate(null);
-                        } else {
-                          if (date < selectedStartDate) {
-                            setSelectedEndDate(selectedStartDate);
-                            setSelectedStartDate(date);
-                          } else {
-                            setSelectedEndDate(date);
-                          }
-                        }
-                      }}
+                      key={`next-${i}`}
+                      className={`
+                        relative p-2 cursor-pointer select-none
+                        ${isPast ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100'}
+                        ${isStart ? 'bg-navy-700 text-white rounded-l' : ''}
+                        ${isEnd ? 'bg-navy-700 text-white rounded-r' : ''}
+                        ${isRange ? 'bg-navy-100' : ''}
+                        ${(isStart || isEnd) ? 'z-10' : ''}
+                      `}
+                      onClick={() => handleNextMonthDateClick(day, nextMonth, nextMonthYear)}
                     >
-                      {day}
+                      <span className={`relative z-10 ${isRange ? 'text-navy-800' : ''}`}>
+                        {day}
+                      </span>
+                      {isRange && !isStart && !isEnd && (
+                        <div className="absolute inset-0 bg-navy-100"></div>
+                      )}
                     </div>
                   );
                 })}

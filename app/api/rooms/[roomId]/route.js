@@ -1,5 +1,6 @@
+// app/api/rooms/[roomId]/route.js
 import { NextResponse } from 'next/server';
-import { storageService } from '@/src/services/storage';
+import { prisma } from '@/src/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 
@@ -18,7 +19,7 @@ export async function PUT(request, { params }) {
     const updateData = await request.json();
 
     // Validate required fields
-    const requiredFields = ['name', 'type', 'price', 'capacity', 'bedType', 'description'];
+    const requiredFields = ['name', 'description', 'price', 'capacity'];
     const missingFields = requiredFields.filter(field => !updateData[field]);
 
     if (missingFields.length > 0) {
@@ -43,13 +44,30 @@ export async function PUT(request, { params }) {
       );
     }
 
-    const updatedRoom = await storageService.updateRoom(roomId, updateData);
+    // Check if room exists
+    const existingRoom = await prisma.room.findUnique({
+      where: { id: roomId }
+    });
+
+    if (!existingRoom) {
+      return NextResponse.json(
+        { error: 'Room not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update room
+    const updatedRoom = await prisma.room.update({
+      where: { id: roomId },
+      data: updateData
+    });
+
     return NextResponse.json(updatedRoom);
   } catch (error) {
     console.error('Error updating room:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to update room' },
-      { status: error.message === 'Room not found' ? 404 : 500 }
+      { status: 500 }
     );
   }
 }
@@ -66,7 +84,43 @@ export async function DELETE(request, { params }) {
     }
 
     const { roomId } = params;
-    await storageService.deleteRoom(roomId);
+
+    // Check if room exists
+    const existingRoom = await prisma.room.findUnique({
+      where: { id: roomId }
+    });
+
+    if (!existingRoom) {
+      return NextResponse.json(
+        { error: 'Room not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if room has active bookings
+    const activeBookings = await prisma.booking.findMany({
+      where: {
+        roomId,
+        status: {
+          not: 'cancelled'
+        },
+        checkOut: {
+          gt: new Date()
+        }
+      }
+    });
+
+    if (activeBookings.length > 0) {
+      return NextResponse.json(
+        { error: 'Cannot delete room with active bookings' },
+        { status: 400 }
+      );
+    }
+
+    // Delete room
+    await prisma.room.delete({
+      where: { id: roomId }
+    });
 
     return NextResponse.json({
       message: 'Room deleted successfully'
@@ -75,10 +129,7 @@ export async function DELETE(request, { params }) {
     console.error('Error deleting room:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to delete room' },
-      {
-        status: error.message === 'Room not found' ? 404 :
-          error.message === 'Cannot delete room with active bookings' ? 400 : 500
-      }
+      { status: 500 }
     );
   }
 }
@@ -86,9 +137,18 @@ export async function DELETE(request, { params }) {
 export async function GET(request, { params }) {
   try {
     const { roomId } = params;
-    const room = await storageService.getRoom(roomId);
+    
+    console.log('Fetching room with ID:', roomId);
+    
+    // Get room from database using Prisma
+    const room = await prisma.room.findUnique({
+      where: { id: roomId }
+    });
+    
+    console.log('Retrieved room:', room);
 
     if (!room) {
+      console.log('Room not found');
       return NextResponse.json(
         { error: 'Room not found' },
         { status: 404 }
@@ -99,8 +159,8 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error('Error fetching room:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch room details' },
+      { error: error.message || 'Failed to fetch room details' },
       { status: 500 }
     );
   }
-} 
+}
