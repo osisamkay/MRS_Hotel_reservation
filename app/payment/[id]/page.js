@@ -225,7 +225,7 @@ export default function PaymentPage({ params }) {
             <PageHeader />
 
             {/* Hotel Header */}
-            <div className="bg-navy-800 text-white py-4 px-4">
+            {/* <div className="bg-navy-800 text-white py-4 px-4">
                 <div className="container mx-auto max-w-4xl">
                     <h1 className="text-3xl font-bold text-center mb-1">MOOSE ROCK AND SUITES</h1>
                     <p className="text-center mb-2">117 Carrington Avenue BC</p>
@@ -234,12 +234,12 @@ export default function PaymentPage({ params }) {
                         <span>342 709 4565</span>
                     </div>
                 </div>
-            </div>
+            </div> */}
 
             <div className="container mx-auto px-4 py-8 max-w-4xl">
                 {/* Booking Summary */}
                 {booking && room && (
-                    <div className="mb-8 p-4 bg-gray-50 rounded-lg shadow-sm">
+                    <div className="mb-8 p-4 py-8 bg-gray-50 rounded-lg shadow-sm">
                         <h2 className="text-xl font-bold mb-2">Booking Summary</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -433,7 +433,7 @@ export default function PaymentPage({ params }) {
                         </div>
 
                         {/* Payment Icons */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                        {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
                             <div className="flex justify-center">
                                 <Image src="/assets/images/mastercard.svg" alt="Mastercard" width={80} height={50} className="h-10 object-contain" />
                             </div>
@@ -461,7 +461,7 @@ export default function PaymentPage({ params }) {
                             <div className="flex justify-center">
                                 <Image src="/assets/images/samsungpay.svg" alt="Samsung Pay" width={80} height={50} className="h-10 object-contain" />
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Credit Card Details */}
