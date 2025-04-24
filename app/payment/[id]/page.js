@@ -42,95 +42,99 @@ export default function PaymentPage({ params }) {
 
     // Fetch booking details
     useEffect(() => {
-        const fetchBookingDetails = async () => {
-            try {
-                setLoading(true);
-                const bookingId = params.id;
+        const fetchBookingDetails = () => {
+            setLoading(true);
+            const bookingId = params.id;
 
-                // Get guest email from localStorage if available
-                let guestEmail = '';
-                if (typeof window !== 'undefined') {
-                    // First try to get the email from the direct key-value pair
-                    guestEmail = localStorage.getItem('guestEmail');
-                    console.log('Retrieved guestEmail directly from localStorage:', guestEmail);
+            // Get guest email from localStorage if available
+            let guestEmail = '';
+            if (typeof window !== 'undefined') {
+                // First try to get the email from the direct key-value pair
+                guestEmail = localStorage.getItem('guestEmail');
+                console.log('Retrieved guestEmail directly from localStorage:', guestEmail);
 
-                    // If not found, try to get it from bookingState
-                    if (!guestEmail) {
-                        const bookingState = localStorage.getItem('bookingState');
-                        console.log('Retrieved bookingState from localStorage:', bookingState);
+                // If not found, try to get it from bookingState
+                if (!guestEmail) {
+                    const bookingState = localStorage.getItem('bookingState');
+                    console.log('Retrieved bookingState from localStorage:', bookingState);
 
-                        if (bookingState) {
-                            try {
-                                const parsedState = JSON.parse(bookingState);
-                                console.log('Parsed bookingState:', parsedState);
+                    if (bookingState) {
+                        try {
+                            const parsedState = JSON.parse(bookingState);
+                            console.log('Parsed bookingState:', parsedState);
 
-                                if (parsedState && parsedState.email) {
-                                    guestEmail = parsedState.email;
-                                    console.log('Using guest email from bookingState:', guestEmail);
-                                }
-                            } catch (e) {
-                                console.error('Error parsing booking state:', e);
+                            if (parsedState && parsedState.email) {
+                                guestEmail = parsedState.email;
+                                console.log('Using guest email from bookingState:', guestEmail);
                             }
+                        } catch (e) {
+                            console.error('Error parsing booking state:', e);
                         }
                     }
                 }
-
-                // Fetch booking details with guest email header
-                console.log(`Fetching booking ${bookingId} with guest email header:`, guestEmail);
-
-                const bookingResponse = await fetch(`/api/bookings/${bookingId}`, {
-                    headers: {
-                        'x-guest-email': guestEmail || ''
-                    }
-                });
-
-                if (!bookingResponse.ok) {
-                    const errorText = await bookingResponse.text();
-                    console.error('Booking fetch failed:', bookingResponse.status, errorText);
-                    try {
-                        const errorJson = JSON.parse(errorText);
-                        throw new Error(errorJson.error || 'Failed to fetch booking details');
-                    } catch (e) {
-                        throw new Error('Failed to fetch booking details');
-                    }
-                }
-
-                const bookingData = await bookingResponse.json();
-                setBooking(bookingData);
-
-                // Pre-fill billing info if available
-                if (bookingData.guestName) {
-                    const nameParts = bookingData.guestName.split(' ');
-                    setBillingInfo(prev => ({
-                        ...prev,
-                        firstName: nameParts[0] || '',
-                        lastName: nameParts.slice(1).join(' ') || '',
-                        emailAddress: bookingData.guestEmail || guestEmail || '',
-                        phoneNumber: bookingData.guestPhone || '',
-                    }));
-
-                    // Also pre-fill cardholder name
-                    setCardDetails(prev => ({
-                        ...prev,
-                        cardholderName: bookingData.guestName || '',
-                    }));
-                }
-
-                // Fetch room details
-                const roomResponse = await fetch(`/api/rooms/${bookingData.roomId}`);
-                if (!roomResponse.ok) {
-                    throw new Error('Failed to fetch room details');
-                }
-
-                const roomData = await roomResponse.json();
-                setRoom(roomData);
-
-                setLoading(false);
-            } catch (error) {
-                console.error('Error fetching booking details:', error);
-                setError('Failed to load booking details. Please try again.');
-                setLoading(false);
             }
+
+            // Fetch booking details with guest email header
+            console.log(`Fetching booking ${bookingId} with guest email header:`, guestEmail);
+
+            fetch(`/api/bookings/${bookingId}`, {
+                headers: {
+                    'x-guest-email': guestEmail || ''
+                }
+            })
+                .then(bookingResponse => {
+                    if (!bookingResponse.ok) {
+                        return bookingResponse.text().then(errorText => {
+                            console.error('Booking fetch failed:', bookingResponse.status, errorText);
+                            try {
+                                const errorJson = JSON.parse(errorText);
+                                throw new Error(errorJson.error || 'Failed to fetch booking details');
+                            } catch (e) {
+                                throw new Error('Failed to fetch booking details');
+                            }
+                        });
+                    }
+                    return bookingResponse.json();
+                })
+                .then(bookingData => {
+                    setBooking(bookingData);
+
+                    // Pre-fill billing info if available
+                    if (bookingData.guestName) {
+                        const nameParts = bookingData.guestName.split(' ');
+                        setBillingInfo(prev => ({
+                            ...prev,
+                            firstName: nameParts[0] || '',
+                            lastName: nameParts.slice(1).join(' ') || '',
+                            emailAddress: bookingData.guestEmail || guestEmail || '',
+                            phoneNumber: bookingData.guestPhone || '',
+                        }));
+
+                        // Also pre-fill cardholder name
+                        setCardDetails(prev => ({
+                            ...prev,
+                            cardholderName: bookingData.guestName || '',
+                        }));
+                    }
+
+                    // Fetch room details
+                    return fetch(`/api/rooms/${bookingData.roomId}`);
+                })
+                .then(roomResponse => {
+                    if (!roomResponse.ok) {
+                        throw new Error('Failed to fetch room details');
+                    }
+                    return roomResponse.json();
+                })
+                .then(roomData => {
+                    setRoom(roomData);
+                    setLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error fetching booking details:', error);
+                    setError('Failed to load booking details. Please try again.');
+                    setLoading(false);
+                });
         };
 
         fetchBookingDetails();
@@ -160,7 +164,7 @@ export default function PaymentPage({ params }) {
     };
 
     // Handle form submission
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
 
         if (!paymentMethod) {
@@ -168,48 +172,52 @@ export default function PaymentPage({ params }) {
             return;
         }
 
-        try {
-            setLoading(true);
+        setLoading(true);
 
-            // Process payment
-            const paymentResponse = await fetch('/api/payments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    bookingId: booking.id,
-                    amount: booking.totalPrice,
-                    method: paymentMethod,
-                    // For credit/debit card payments, include card details
-                    ...(paymentMethod === 'creditCard' || paymentMethod === 'debitCard' ? {
-                        cardDetails: {
-                            last4: cardDetails.cardNumber.slice(-4),
-                            expiryDate: cardDetails.expiryMonth,
-                        }
-                    } : {})
-                }),
+        // Process payment using promise-based approach
+        fetch('/api/payments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                bookingId: booking.id,
+                amount: booking.totalPrice,
+                method: paymentMethod,
+                // For credit/debit card payments, include card details
+                ...(paymentMethod === 'creditCard' || paymentMethod === 'debitCard' ? {
+                    cardDetails: {
+                        last4: cardDetails.cardNumber.slice(-4),
+                        expiryDate: cardDetails.expiryMonth,
+                    }
+                } : {})
+            }),
+        })
+            .then(function (paymentResponse) {
+                if (!paymentResponse.ok) {
+                    return paymentResponse.json().then(function (errorData) {
+                        throw new Error(errorData.error || 'Failed to process payment');
+                    });
+                }
+                return paymentResponse.json();
+            })
+            .then(function () {
+                // Payment successful
+                showNotification('success', 'Payment processed successfully! A confirmation email has been sent.');
+
+                // Redirect to confirmation page
+                setTimeout(function () {
+                    router.push(`/booking/confirmation/${booking.id}`);
+                }, 2000);
+            })
+            .catch(function (error) {
+                console.error('Payment error:', error);
+                setError(error.message || 'Failed to process payment');
+                showNotification('error', error.message || 'Failed to process payment');
+            })
+            .finally(function () {
+                setLoading(false);
             });
-
-            if (!paymentResponse.ok) {
-                const errorData = await paymentResponse.json();
-                throw new Error(errorData.error || 'Failed to process payment');
-            }
-
-            // Payment successful
-            showNotification('success', 'Payment processed successfully! A confirmation email has been sent.');
-
-            // Redirect to confirmation page
-            setTimeout(() => {
-                router.push(`/booking/confirmation/${booking.id}`);
-            }, 2000);
-        } catch (error) {
-            console.error('Payment error:', error);
-            setError(error.message || 'Failed to process payment');
-            showNotification('error', error.message || 'Failed to process payment');
-        } finally {
-            setLoading(false);
-        }
     };
 
     if (loading) {
@@ -225,7 +233,7 @@ export default function PaymentPage({ params }) {
             <PageHeader />
 
             {/* Hotel Header */}
-            {/* <div className="bg-navy-800 text-white py-4 px-4">
+            <div className="bg-navy-800 text-white py-4 px-4">
                 <div className="container mx-auto max-w-4xl">
                     <h1 className="text-3xl font-bold text-center mb-1">MOOSE ROCK AND SUITES</h1>
                     <p className="text-center mb-2">117 Carrington Avenue BC</p>
@@ -234,7 +242,7 @@ export default function PaymentPage({ params }) {
                         <span>342 709 4565</span>
                     </div>
                 </div>
-            </div> */}
+            </div>
 
             <div className="container mx-auto px-4 py-8 max-w-4xl">
                 {/* Booking Summary */}
@@ -433,7 +441,7 @@ export default function PaymentPage({ params }) {
                         </div>
 
                         {/* Payment Icons */}
-                        {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
                             <div className="flex justify-center">
                                 <Image src="/assets/images/mastercard.svg" alt="Mastercard" width={80} height={50} className="h-10 object-contain" />
                             </div>
@@ -461,7 +469,7 @@ export default function PaymentPage({ params }) {
                             <div className="flex justify-center">
                                 <Image src="/assets/images/samsungpay.svg" alt="Samsung Pay" width={80} height={50} className="h-10 object-contain" />
                             </div>
-                        </div> */}
+                        </div>
                     </div>
 
                     {/* Credit Card Details */}

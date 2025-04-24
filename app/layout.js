@@ -5,6 +5,7 @@ import { authOptions } from "../src/lib/auth";
 import AuthProvider from '@/src/providers/AuthProvider';
 import { BookingProvider } from '@/src/contexts/BookingContext';
 import { LocalizationProvider } from '@/src/contexts/LocalizationContext';
+import { LocalizationProviderClient } from '@/src/contexts/LocalizationContextClient';
 import { AuthProvider as CustomAuthProvider } from '@/src/contexts/AuthContext';
 import { NotificationProvider } from '@/src/contexts/NotificationContext';
 
@@ -29,11 +30,13 @@ export default async function RootLayout({ children }) {
         <AuthProvider session={session}>
           <CustomAuthProvider>
             <LocalizationProvider>
-              <BookingProvider>
-                <NotificationProvider>
-                  {children}
-                </NotificationProvider>
-              </BookingProvider>
+              <LocalizationProviderClient>
+                <BookingProvider>
+                  <NotificationProvider>
+                    {children}
+                  </NotificationProvider>
+                </BookingProvider>
+              </LocalizationProviderClient>
             </LocalizationProvider>
           </CustomAuthProvider>
         </AuthProvider>
