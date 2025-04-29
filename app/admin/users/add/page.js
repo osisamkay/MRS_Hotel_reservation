@@ -21,7 +21,7 @@ export default function AddUserPage() {
         setError('');
 
         try {
-            const response = await fetch('/api/users', {
+            const response = await fetch('/api/admin/users', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ export default function AddUserPage() {
     };
 
     return (
-        <div>
+        <div className='container mx-auto'>
             <div className="md:flex md:items-center md:justify-between mb-8">
                 <div className="flex-1 min-w-0">
                     <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">

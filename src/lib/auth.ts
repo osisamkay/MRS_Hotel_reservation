@@ -118,17 +118,20 @@ export const authOptions: NextAuthOptions = {
 export const isUserAdmin = (session: AuthSession | null): boolean => {
   return session?.user?.role === 'admin';
 };
+export const isUserSuperAdmin = (session: AuthSession | null): boolean => {
+  return session?.user?.role === 'super_admin';
+};
 
 export const isUserStaff = (session: AuthSession | null): boolean => {
   return session?.user?.role === 'staff';
 };
 
 export const canManageBookings = (session: AuthSession | null, bookingUserId: string): boolean => {
-  return isUserAdmin(session) || isUserStaff(session) || session?.user?.id === bookingUserId;
+  return isUserAdmin(session) || isUserSuperAdmin(session) || isUserStaff(session) || session?.user?.id === bookingUserId;
 };
 
 export const canViewDashboard = (session: AuthSession | null): boolean => {
-  return isUserAdmin(session) || isUserStaff(session);
+  return isUserAdmin(session) || isUserSuperAdmin(session) || isUserStaff(session);
 };
 
 export const getServerSession = () => getServerSessionBase(authOptions);

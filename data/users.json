@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": "x8swxvo4z",
+    "fullName": "System Administrator",
+    "username": "admin",
+    "email": "admin@mrs.ca",
+    "role": "admin",
+    "accessLevel": "full",
+    "password": "$2a$10$dnY8ZGAgdpTbE2hJH7qGmecQLfPJNy3Sk4P8wc.vJzsnsmvUhcl92",
+    "mustChangePassword": true,
+    "createdAt": "2025-04-25T07:41:56.442Z",
+    "updatedAt": "2025-04-25T07:41:56.442Z"
+  }
+]

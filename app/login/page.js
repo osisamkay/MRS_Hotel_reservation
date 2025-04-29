@@ -126,12 +126,12 @@ export default function LoginPage() {
       } else {
         // Show success notification
         showNotification('success', 'Login successful');
-        
+
         // Get user session to check role
         const response = await fetch('/api/auth/session');
         const session = await response.json();
 
-        if (session?.user?.role === 'admin') {
+        if (session?.user?.role === 'admin' || session?.user?.role === 'super_admin') {
           router.push('/admin');
         } else {
           // Redirect to callback URL or home page

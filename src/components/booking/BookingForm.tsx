@@ -279,7 +279,3 @@ const BookingForm: React.FC<BookingFormProps> = ({
 };
 
 export default BookingForm;
-export default BookingForm;
-export default BookingForm;
-export default BookingForm;
-export default BookingForm;

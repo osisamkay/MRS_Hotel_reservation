@@ -13,11 +13,7 @@ import { BookingFormData } from '@/src/types/booking';
 import { formatISO, differenceInDays, format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
-import { toast } from 'react-hot-toast';
-
-import { getRoomById } from '@/lib/actions/room.actions';
-import { createBooking } from '@/lib/actions/booking.actions';
-import { Room } from '@/lib/models/room.model';
+import { Room } from '@/src/lib/models/room.model';
 
 interface DateValidation {
   isValid: boolean;
@@ -125,7 +121,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       const totalPrice = calculateTotalPrice(
         dates.checkIn,
         dates.checkOut,
-        room.pricePerNight
+        room?.pricePerNight || 0
       );
 
       const bookingData = {
@@ -177,7 +173,7 @@ export default function BookingPage({ params }: BookingPageProps) {
         },
         body: JSON.stringify({
           bookingId,
-          amount: room.pricePerNight * dateValidation.nights,
+          amount: (room?.pricePerNight || 0) * dateValidation.nights,
           paymentMethod,
           cardDetails: {
             number: cardNumber,

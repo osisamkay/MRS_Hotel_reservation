@@ -1,6 +1,15 @@
 {
     "version": 2,
-    "buildCommand": "npx prisma generate && next build",
-    "installCommand": "npm install --no-optional",
-    "framework": "nextjs"
+    "buildCommand": "next build",
+    "devCommand": "next dev",
+    "installCommand": "pnpm install",
+    "framework": "nextjs",
+    "regions": [
+        "sin1"
+    ],
+    "env": {
+        "NEXTAUTH_URL": "PLACEHOLDER_URL",
+        "NEXTAUTH_SECRET": "PLACEHOLDER_SECRET",
+        "DATABASE_URL": "PLACEHOLDER_DATABASE_URL"
+    }
 }

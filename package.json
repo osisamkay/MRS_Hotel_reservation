@@ -11,7 +11,7 @@
         "start": "next start",
         "lint": "next lint",
         "postinstall": "npx prisma generate",
-        "create-super-admin": "node scripts/create-super-admin.js",
+        "create-super-admin": "node scripts/create-admin.js",
         "prisma:seed": "node prisma/seed.js",
         "seed": "node prisma/seed.js",
         "seed:rooms": "node scripts/seed-rooms.js",

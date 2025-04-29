@@ -14,11 +14,11 @@ const PageHeader = () => {
   const auth = useAuth();
   const user = auth?.user;
   const logout = auth?.logout;
-  
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
-  
+
   // Only show SecondaryNav on homepage
   const showSecondaryNav = pathname === '/';
 
@@ -29,7 +29,7 @@ const PageHeader = () => {
         setShowUserMenu(false);
       }
     }
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -82,7 +82,7 @@ const PageHeader = () => {
                   <span className="hidden lg:inline">{user.name || user.email}</span>
                   <ChevronDown size={16} />
                 </button>
-                
+
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                     <Link
@@ -101,9 +101,9 @@ const PageHeader = () => {
                       <BookOpen className="h-4 w-4 mr-2" />
                       My Bookings
                     </Link>
-                    {user.role === 'admin' && (
+                    {(user.role === 'admin' || user.role === 'super_admin') && (
                       <Link
-                        href="/dashboard"
+                        href="/admin"
                         className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowUserMenu(false)}
                       >
@@ -134,7 +134,7 @@ const PageHeader = () => {
               Customer Service
             </Link>
             <div className="pl-2 border-l border-gray-300">
-              <select 
+              <select
                 className="bg-transparent border-none focus:ring-0 text-gray-700 cursor-pointer"
                 defaultValue="CAD"
               >
@@ -144,7 +144,7 @@ const PageHeader = () => {
               </select>
             </div>
             <div>
-              <select 
+              <select
                 className="bg-transparent border-none focus:ring-0 text-gray-700 cursor-pointer"
                 defaultValue="English"
               >
@@ -181,23 +181,23 @@ const PageHeader = () => {
                     </div>
                     <span className="text-gray-700">{user.name || user.email}</span>
                   </div>
-                  <Link 
-                    href="/profile" 
+                  <Link
+                    href="/profile"
                     className="py-2 text-gray-700 hover:text-navy-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Profile
                   </Link>
-                  <Link 
-                    href="/my-bookings" 
+                  <Link
+                    href="/my-bookings"
                     className="py-2 text-gray-700 hover:text-navy-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     My Bookings
                   </Link>
-                  {user.role === 'admin' && (
-                    <Link 
-                      href="/dashboard" 
+                  {(user.role === 'admin' || user.role === 'super_admin') && (
+                    <Link
+                      href="/admin"
                       className="py-2 text-gray-700 hover:text-navy-700"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
@@ -216,30 +216,30 @@ const PageHeader = () => {
                 </>
               ) : (
                 // Non-logged in mobile option
-                <Link 
-                  href="/login" 
+                <Link
+                  href="/login"
                   className="py-2 text-gray-700 hover:text-navy-700"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Login
                 </Link>
               )}
-              <Link 
-                href="/my-bookings" 
+              <Link
+                href="/my-bookings"
                 className="py-2 text-gray-700 hover:text-navy-700"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 My booking
               </Link>
-              <Link 
-                href="/customer-service" 
+              <Link
+                href="/customer-service"
                 className="py-2 text-gray-700 hover:text-navy-700"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Customer Service
               </Link>
               <div className="py-2">
-                <select 
+                <select
                   className="bg-transparent border-none focus:ring-0 text-gray-700"
                   defaultValue="CAD"
                 >
@@ -249,7 +249,7 @@ const PageHeader = () => {
                 </select>
               </div>
               <div className="py-2">
-                <select 
+                <select
                   className="bg-transparent border-none focus:ring-0 text-gray-700"
                   defaultValue="English"
                 >
